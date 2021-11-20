@@ -2,13 +2,14 @@
 Custom dataset classes for satellite images.
 
 https://pytorch.org/tutorials/recipes/recipes/custom_dataset_transforms_loader.html
+https://stackoverflow.com/questions/50544730/how-do-i-split-a-custom-dataset-into-training-and-test-datasets
 """
 import os
 from typing import Optional, Callable, Tuple
 
 import numpy as np
 
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, random_split
 from skimage import io
 
 
@@ -63,3 +64,22 @@ class SatelliteImagesTrainDataset(Dataset):
 class SatelliteImagesTestDataset(Dataset):
     """Testing dataset of satellite images."""
     pass
+
+
+def train_test_split(dataset: Dataset,
+                     test_ratio: float) -> Tuple[Dataset, Dataset]:
+    """Splits a dataset into random train and test subsets.
+
+    Args:
+        dataset (Dataset): dataset.
+        test_ratio (float): test proportion (between 0 and 1).
+
+    Returns:
+        Tuple[Dataset, Dataset]: train and test datasets.
+    """
+    train_ratio = 1 - test_ratio
+    train_size = int(train_ratio * len(dataset))
+    test_size = len(dataset) - train_size
+    lengths = [train_size, test_size]
+    train_dataset, test_dataset = random_split(dataset, lengths)
+    return train_dataset, test_dataset
