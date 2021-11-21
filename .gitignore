@@ -109,3 +109,10 @@ ENV/
 
 # CSV files
 *.csv
+
+# Data
+data/test_set_images/
+data/training/
+
+# Out
+out/
