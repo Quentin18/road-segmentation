@@ -19,4 +19,4 @@ pip3 install -r requirements.txt
 
 ## References
 
-See [references](references).
+See [references](references.md).
