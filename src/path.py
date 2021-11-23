@@ -9,7 +9,7 @@ import zipfile
 DIRNAME = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(DIRNAME)
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
-MODELS_DIR = os.path.join(ROOT_DIR, 'models')
+WEIGHTS_DIR = os.path.join(ROOT_DIR, 'weights')
 OUT_DIR = os.path.join(ROOT_DIR, 'out')
 
 # Dataset paths
