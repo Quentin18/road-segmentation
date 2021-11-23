@@ -5,12 +5,11 @@ https://pytorch.org/tutorials/recipes/recipes/custom_dataset_transforms_loader.h
 https://stackoverflow.com/questions/50544730/how-do-i-split-a-custom-dataset-into-training-and-test-datasets
 """
 import os
-from typing import Optional, Callable, Tuple
+from typing import Callable, Optional, Tuple
 
 import numpy as np
-
+from PIL import Image
 from torch.utils.data import Dataset, random_split
-from skimage import io
 
 
 class SatelliteImagesTrainDataset(Dataset):
@@ -26,35 +25,63 @@ class SatelliteImagesTrainDataset(Dataset):
         Args:
             root_dir (str): path of the directory with the `images` and
             `groundtruth` directories.
-            image_transform (Optional[Callable], optional): optional transform
-            to be applied on an image. Defaults to None.
-            mask_transform (Optional[Callable], optional): optional transform
-            to be applied on a mask. Defaults to None.
+            image_transform (Callable, optional): optional transform to be
+            applied on an image. Defaults to None.
+            mask_transform (Callable, optional): optional transform to be
+            applied on a mask. Defaults to None.
         """
+        # Directories paths
         self.img_dir = os.path.join(root_dir, 'images')
         self.gt_dir = os.path.join(root_dir, 'groundtruth')
-        self.images_names = os.listdir(self.img_dir)    # list of images names
-        self.masks_names = os.listdir(self.gt_dir)      # list of masks names
+
+        # Lists of images and masks names
+        self.images_names = os.listdir(self.img_dir)
+        self.masks_names = os.listdir(self.gt_dir)
+
+        # Transforms
         self.image_transform = image_transform
         self.mask_transform = mask_transform
 
     @staticmethod
-    def _read_img(img_name: str) -> np.ndarray:
-        return io.imread(img_name)
+    def _read_img(img_path: str) -> Image:
+        """Reads an image from its path.
+
+        Args:
+            img_path (str): image path.
+
+        Returns:
+            Image: PIL image.
+        """
+        return Image.open(img_path)
 
     def __len__(self) -> int:
+        """Returns the number of images in the dataset.
+
+        Returns:
+            int: number of images.
+        """
         return len(self.images_names)
 
     def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
+        """Gets an image and its corresponding mask.
+
+        Args:
+            index (int): index of the image in the list.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: image, mask.
+        """
         img_path = os.path.join(self.img_dir, self.images_names[index])
         mask_path = os.path.join(self.gt_dir, self.masks_names[index])
 
         image = self._read_img(img_path)
         mask = self._read_img(mask_path)
 
+        # Apply image transformations
         if self.image_transform is not None:
             image = self.image_transform(image)
 
+        # Apply mask transformations
         if self.mask_transform is not None:
             mask = self.mask_transform(mask)
 
