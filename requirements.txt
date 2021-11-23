@@ -1,6 +1,8 @@
 numpy
 matplotlib
 pillow
+skimage
 tensorflow
 torch
 torchvision
+tqdm
