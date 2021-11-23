@@ -34,3 +34,15 @@ def plot_image_mask(image, mask):
     cimg = concatenate_images(image, mask)
     plt.figure(figsize=(10, 10))
     plt.imshow(cimg, cmap='Greys_r')
+
+
+def plot_loss(train_loss: list, test_loss: list) -> None:
+    """Plots train and test loss."""
+    plt.style.use('ggplot')
+    plt.figure()
+    plt.plot(train_loss, label='Train loss')
+    plt.plot(test_loss, label='Test loss')
+    plt.title('Training Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend(loc='lower left')
