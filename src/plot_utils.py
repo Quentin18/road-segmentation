@@ -54,15 +54,17 @@ def plot_loss(train_loss: list, test_loss: list) -> None:
 def plot_images(
     image: Union[Image, Tensor],
     mask: Union[Image, Tensor],
-    pred: Union[Image, Tensor] = None
+    pred: Union[Image, Tensor] = None,
+    show: bool = True,
 ) -> None:
     """Plots an image, its mask and optionaly a predicted mask.
 
     Args:
         image (Union[Image, Tensor]): image as PIL image of tensor.
         mask (Union[Image, Tensor]): mask as PIL image or tensor.
-        pred (Union[Image, Tensor]): predicted mask as PIL image or tensor.
-        Defaults to None.
+        pred (Union[Image, Tensor], optional): predicted mask as PIL image or
+        tensor. Defaults to None.
+        show (bool): call show.
     """
     # Convert image, mask and pred to PIL images
     transform = transforms.ToPILImage()
@@ -75,7 +77,7 @@ def plot_images(
 
     # Create figure
     ncols = 2 if pred is None else 3
-    fig, ax = plt.subplots(nrows=1, ncols=ncols, figsize=(10, 10))
+    fig, ax = plt.subplots(nrows=1, ncols=ncols, figsize=(10, 5))
 
     # Plot image and mask
     images, titles = [image, mask], ['Image', 'Mask']
@@ -89,3 +91,6 @@ def plot_images(
         ax[i].set_title(title)
 
     fig.tight_layout()
+
+    if show:
+        plt.show()
