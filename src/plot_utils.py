@@ -74,7 +74,6 @@ def plot_images(
         pred = transform(pred)
 
     # Create figure
-    plt.figure(figsize=(10, 10))
     ncols = 2 if pred is None else 3
     fig, ax = plt.subplots(nrows=1, ncols=ncols, figsize=(10, 10))
 
