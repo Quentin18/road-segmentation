@@ -57,8 +57,9 @@ class Trainer:
         # Calculate steps per epoch for train and valid set
         self.train_steps = len(self.data_loader.dataset) // \
             self.data_loader.batch_size
-        self.valid_steps = len(self.valid_data_loader.dataset) // \
-            self.valid_data_loader.batch_size
+        if self.do_validation:
+            self.valid_steps = len(self.valid_data_loader.dataset) // \
+                self.valid_data_loader.batch_size
 
         # Initialize a dictionary to store training history
         self.history = {

@@ -13,7 +13,7 @@ from src.nets import UNet
 from src.path import (DATA_TEST_PATH, DEFAULT_SUBMISSION_MASK_DIR,
                       DEFAULT_WEIGHTS_PATH, OUT_DIR, create_dirs,
                       extract_archives)
-from src.predicter import Predicter
+from src.predicter import PredicterSubmission
 from src.submission import masks_to_submission
 
 
@@ -68,7 +68,7 @@ def main(args: argparse.Namespace) -> None:
     model.load_state_dict(state_dict)
 
     # Create predicter
-    predicter = Predicter(
+    predicter = PredicterSubmission(
         model=model,
         device=device,
         predictions_path=DEFAULT_SUBMISSION_MASK_DIR,
@@ -79,6 +79,7 @@ def main(args: argparse.Namespace) -> None:
     predicter.predict(args.proba_threshold)
 
     # CSV submission
+    print("== Creation of mask images ==")
     mask_path_submission = os.path.join(OUT_DIR, 'submission')
     mask_filename = os.listdir(mask_path_submission)
     masks_to_submission(os.path.join(OUT_DIR, 'UNet_submission.csv'),
@@ -116,8 +117,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--image-size",
         type=int,
-        default=400,
-        help="target input image size (default: 400)",
+        default=608,
+        help="target input image size (default: 608)",
     )
     parser.add_argument(
         "--seed",

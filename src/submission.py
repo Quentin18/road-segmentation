@@ -136,7 +136,7 @@ def patch_to_label(patch: np.ndarray,
     return int(np.mean(patch) > foreground_threshold)
 
 
-def mask_to_submission_strings(mask_filename: str, patch_size: int = 1,
+def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
                                foreground_threshold: float = 0.25):
     """Reads a single mask image and outputs the strings that should go into
     the submission file.
@@ -150,8 +150,8 @@ def mask_to_submission_strings(mask_filename: str, patch_size: int = 1,
     mask_name = os.path.basename(mask_filename)
     img_number = int(re.search(r"\d+", mask_name).group(0))
     im = io.imread(os.path.join(OUT_DIR, 'submission', mask_filename))
-    for j in range(0, im.shape[1]):
-        for i in range(0, im.shape[0]):
+    for j in range(0, im.shape[1], patch_size):
+        for i in range(0, im.shape[0], patch_size):
             if im[i, j, 0] == 0:
                 label = 0
             else:
@@ -160,7 +160,7 @@ def mask_to_submission_strings(mask_filename: str, patch_size: int = 1,
 
 
 def masks_to_submission(submission_filename: str,
-                        masks_filenames: list, patch_size: int = 1,
+                        masks_filenames: list, patch_size: int = 16,
                         foreground_threshold: float = 0.25) -> None:
     """Creates a submission file from masks filenames.
 
