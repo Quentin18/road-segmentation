@@ -20,6 +20,9 @@ DATA_TRAIN_PATH = os.path.join(DATA_DIR, 'training')
 DEFAULT_LOSSES_PATH = os.path.join(MODELS_DIR, 'losses.pickle')
 DEFAULT_WEIGHTS_PATH = os.path.join(MODELS_DIR, 'weights.pt')
 
+# Testing paths
+DEFAULT_PREDICTIONS_DIR = os.path.join(OUT_DIR, 'predictions')
+
 
 def extract_archives() -> None:
     """Extracts the archives in the data directory if needed."""
@@ -32,6 +35,6 @@ def extract_archives() -> None:
 
 def create_dirs() -> None:
     """Creates directories if needed."""
-    for path in (MODELS_DIR, OUT_DIR):
+    for path in (MODELS_DIR, OUT_DIR, DEFAULT_PREDICTIONS_DIR):
         if not os.path.exists(path):
             os.mkdir(path)
