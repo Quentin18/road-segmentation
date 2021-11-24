@@ -22,6 +22,7 @@ DEFAULT_WEIGHTS_PATH = os.path.join(MODELS_DIR, 'weights.pt')
 
 # Testing paths
 DEFAULT_PREDICTIONS_DIR = os.path.join(OUT_DIR, 'predictions')
+DEFAULT_SUBMISSION_MASK_DIR = os.path.join(OUT_DIR, 'submission')
 
 
 def extract_archives() -> None:

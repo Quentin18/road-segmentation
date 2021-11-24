@@ -132,7 +132,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--split-ratio",
-        type=int,
+        type=float,
         default=0.2,
         help="train test split ratio. 0 to train the whole dataset "
              "(default: 0.2)",

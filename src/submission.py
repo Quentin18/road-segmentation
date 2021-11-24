@@ -4,10 +4,12 @@ Functions to manage submissions for AICrowd.
 import os
 import re
 from typing import List
+from tqdm import tqdm
 
 import numpy as np
 from PIL import Image
 from skimage import io
+from src.path import OUT_DIR
 
 
 def binary_to_uint8(array: np.ndarray) -> np.ndarray:
@@ -134,7 +136,7 @@ def patch_to_label(patch: np.ndarray,
     return int(np.mean(patch) > foreground_threshold)
 
 
-def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
+def mask_to_submission_strings(mask_filename: str, patch_size: int = 1,
                                foreground_threshold: float = 0.25):
     """Reads a single mask image and outputs the strings that should go into
     the submission file.
@@ -147,17 +149,18 @@ def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
     """
     mask_name = os.path.basename(mask_filename)
     img_number = int(re.search(r"\d+", mask_name).group(0))
-    print(img_number)
-    im = io.imread(mask_filename)
-    for j in range(0, im.shape[1], patch_size):
-        for i in range(0, im.shape[0], patch_size):
-            patch = im[i:i + patch_size, j:j + patch_size]
-            label = patch_to_label(patch, foreground_threshold)
+    im = io.imread(os.path.join(OUT_DIR, 'submission', mask_filename))
+    for j in range(0, im.shape[1]):
+        for i in range(0, im.shape[0]):
+            if im[i, j, 0] == 0:
+                label = 0
+            else:
+                label = 1
             yield f'{img_number:03d}_{j}_{i},{label}'
 
 
 def masks_to_submission(submission_filename: str,
-                        masks_filenames: list, patch_size: int = 16,
+                        masks_filenames: list, patch_size: int = 1,
                         foreground_threshold: float = 0.25) -> None:
     """Creates a submission file from masks filenames.
 
@@ -170,7 +173,6 @@ def masks_to_submission(submission_filename: str,
     """
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
-        for fn in masks_filenames:
-            print(fn)
+        for fn in tqdm(masks_filenames):
             f.writelines(f'{s}\n' for s in mask_to_submission_strings(
                 fn, patch_size, foreground_threshold))
