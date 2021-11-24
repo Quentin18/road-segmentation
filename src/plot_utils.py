@@ -34,12 +34,13 @@ def concatenate_images(img, gt_img):
     return cimg
 
 
-def plot_loss(train_loss: list, test_loss: list) -> None:
+def plot_loss(train_loss: list, test_loss: list, path: str = None) -> None:
     """Plots train and test loss.
 
     Args:
         train_loss (list): train loss list.
         test_loss (list): test loss list.
+        path(str, optional): path to save the figure.
     """
     plt.style.use('ggplot')
     plt.figure()
@@ -49,6 +50,8 @@ def plot_loss(train_loss: list, test_loss: list) -> None:
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend(loc='lower left')
+    if path is not None:
+        plt.savefig(path)
 
 
 def plot_images(
