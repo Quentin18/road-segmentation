@@ -9,12 +9,16 @@ import zipfile
 DIRNAME = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(DIRNAME)
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
-WEIGHTS_DIR = os.path.join(ROOT_DIR, 'weights')
+MODELS_DIR = os.path.join(ROOT_DIR, 'models')
 OUT_DIR = os.path.join(ROOT_DIR, 'out')
 
 # Dataset paths
 DATA_TEST_PATH = os.path.join(DATA_DIR, 'test_set_images')
 DATA_TRAIN_PATH = os.path.join(DATA_DIR, 'training')
+
+# Training paths
+DEFAULT_LOSSES_PATH = os.path.join(MODELS_DIR, 'losses.pickle')
+DEFAULT_WEIGHTS_PATH = os.path.join(MODELS_DIR, 'weights.pt')
 
 
 def extract_archives() -> None:
@@ -26,7 +30,8 @@ def extract_archives() -> None:
                 zf.extractall(DATA_DIR)
 
 
-def create_out_dir() -> None:
-    """Creates the `out` directory if needed."""
-    if not os.path.exists(OUT_DIR):
-        os.mkdir(OUT_DIR)
+def create_dirs() -> None:
+    """Creates directories if needed."""
+    for path in (MODELS_DIR, OUT_DIR):
+        if not os.path.exists(path):
+            os.mkdir(path)
