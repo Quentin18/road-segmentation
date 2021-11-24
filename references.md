@@ -12,3 +12,6 @@
     - [Training a classifier](https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html)
     - [Developing custom PyTorch dataloaders](https://pytorch.org/tutorials/recipes/recipes/custom_dataset_transforms_loader.html)
     - [Visualization utilities](https://pytorch.org/vision/master/auto_examples/plot_visualization_utils.html)
+
+- Other Python libraries:
+    - [tqdm](https://github.com/tqdm/tqdm)
