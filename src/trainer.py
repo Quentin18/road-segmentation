@@ -8,6 +8,8 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm, trange
 
+from src.metrics import accuracy_score_tensors, f1_score_tensors
+
 
 class Trainer:
     """
@@ -53,6 +55,7 @@ class Trainer:
         self.valid_data_loader = valid_data_loader
         self.save_period = save_period
         self.do_validation = self.valid_data_loader is not None
+        self.proba_threshold = 0.25
 
         # Calculate steps per epoch for train and valid set
         self.train_steps = len(self.data_loader.dataset) // \
@@ -89,7 +92,7 @@ class Trainer:
             unit='batch',
             leave=False,
         ) as t:
-            t.set_postfix(loss=None)
+            t.set_postfix(loss=None, accuracy=None, f1=None)
             for data, target in t:
                 # Send the input to the device
                 data, target = data.to(self.device), target.to(self.device)
@@ -103,9 +106,19 @@ class Trainer:
                 loss.backward()
                 self.optimizer.step()
 
+                # Predict labels
+                target = (target > self.proba_threshold).type(torch.uint8)
+                output = (output > self.proba_threshold).type(torch.uint8)
+
                 # Add the loss to the total training loss
-                t.set_postfix(loss=loss.item())
                 total_train_loss += loss.item()
+
+                # Update progress bar
+                t.set_postfix(
+                    loss=loss.item(),
+                    accuracy=accuracy_score_tensors(target, output),
+                    f1=f1_score_tensors(target, output),
+                )
 
         # Calculate the average training loss
         train_loss = total_train_loss / self.train_steps
