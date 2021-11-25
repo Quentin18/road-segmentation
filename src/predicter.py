@@ -66,7 +66,8 @@ class Predicter:
                     output = self.model(data)
 
                     # Get labels
-                    output = (output > proba_threshold)
+                    target = (target > proba_threshold).type(torch.uint8)
+                    output = (output > proba_threshold).type(torch.uint8)
 
                     # Compute metrics
                     if target is not None:
