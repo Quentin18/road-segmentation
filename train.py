@@ -18,6 +18,11 @@ from src.trainer import Trainer
 
 
 def main(args: argparse.Namespace):
+    """Main to train.
+
+    Args:
+        args (argparse.Namespace): namespace of arguments.
+    """
     print('== Start training ==')
 
     # Extract archives and create directories if needed
@@ -29,6 +34,7 @@ def main(args: argparse.Namespace):
 
     # Define device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print('Device:', device)
     pin_memory = device == 'cuda'
 
     # Define transforms
@@ -125,8 +131,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=16,
-        help="input batch size for training (default: 16)",
+        default=1,
+        help="input batch size for training (default: 1)",
     )
     parser.add_argument(
         "--epochs",
@@ -166,7 +172,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--split-ratio",
-        type=int,
+        type=float,
         default=0.2,
         help="train test split ratio. 0 to train the whole dataset "
              "(default: 0.2)",
