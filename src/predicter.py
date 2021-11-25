@@ -64,7 +64,7 @@ class Predicter:
 
                     # Send the input to the device
                     data = data.to(self.device)
-                    if target != 0:
+                    if target is not None:
                         target = target.to(self.device)
 
                     # Make the predictions
@@ -74,7 +74,7 @@ class Predicter:
                     output = (output > proba_threshold).type(torch.uint8)
 
                     # Compute metrics
-                    if target != 0:
+                    if target is not None:
                         target = (target > proba_threshold).type(torch.uint8)
                         accuracy = accuracy_score_tensors(target, output)
                         f1 = f1_score_tensors(target, output)
@@ -92,9 +92,6 @@ class Predicter:
         if accuracy_scores and f1_scores:
             avg_accuracy = sum(accuracy_scores).item() / len(accuracy_scores)
             avg_f1 = sum(f1_scores).item() / len(f1_scores)
-            print(f'Accuracy: {100 * avg_accuracy:.3f}%')
-            print(f'F1 score: {100 * avg_f1:.3f}%')
-
         return avg_accuracy, avg_f1
 
     def create_submission(self, submission_filename: str) -> None:
