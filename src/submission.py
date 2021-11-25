@@ -4,11 +4,12 @@ Functions to manage submissions for AICrowd.
 import os
 import re
 from typing import List
-from tqdm import tqdm
 
 import numpy as np
 from PIL import Image
 from skimage import io
+from tqdm import tqdm
+
 from src.path import OUT_DIR
 
 
@@ -173,6 +174,6 @@ def masks_to_submission(submission_filename: str,
     """
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
-        for fn in tqdm(masks_filenames):
+        for fn in tqdm(masks_filenames, desc='Create submission', unit='mask'):
             f.writelines(f'{s}\n' for s in mask_to_submission_strings(
                 fn, patch_size, foreground_threshold))
