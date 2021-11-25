@@ -117,3 +117,6 @@ data/images_test
 
 # Out
 out/
+
+# Model
+models/my_models
