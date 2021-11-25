@@ -34,7 +34,7 @@ def f1_score_tensors(
         output (torch.Tensor): Predicted labels, as returned by a classifier.
 
     Returns:
-        float: accuracy score between 0 and 1.
+        float: f1 score between 0 and 1.
     """
     target = target.flatten().detach().numpy().astype(int)
     output = output.flatten().detach().numpy().astype(int)
