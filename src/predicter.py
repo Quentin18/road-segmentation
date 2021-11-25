@@ -64,7 +64,7 @@ class Predicter:
 
                     # Send the input to the device
                     data = data.to(self.device)
-                    if target != 0:
+                    if isinstance(target, torch.Tensor):
                         target = target.to(self.device)
 
                     # Make the predictions
@@ -74,7 +74,7 @@ class Predicter:
                     output = (output > proba_threshold).type(torch.uint8)
 
                     # Compute metrics
-                    if target != 0:
+                    if isinstance(target, torch.Tensor):
                         target = (target > proba_threshold).type(torch.uint8)
                         accuracy = accuracy_score_tensors(target, output)
                         f1 = f1_score_tensors(target, output)
