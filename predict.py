@@ -7,10 +7,11 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from src.datasets import SatelliteImagesTrainDataset, train_test_split
+from src.datasets import SatelliteImagesDataset, train_test_split
 from src.nets import UNet
-from src.path import (DATA_TRAIN_PATH, DEFAULT_PREDICTIONS_DIR,
-                      DEFAULT_WEIGHTS_PATH, create_dirs, extract_archives)
+from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
+                      DEFAULT_PREDICTIONS_DIR, DEFAULT_WEIGHTS_PATH,
+                      create_dirs, extract_archives)
 from src.predicter import Predicter
 
 
@@ -42,12 +43,13 @@ def main(args: argparse.Namespace) -> None:
     ])
     mask_transform = transforms.Compose([
         transforms.Resize((args.image_size, args.image_size)),
-        transforms.ToTensor()
+        transforms.ToTensor(),
     ])
 
     # Define dataset
-    dataset = SatelliteImagesTrainDataset(
-        root_dir=DATA_TRAIN_PATH,
+    dataset = SatelliteImagesDataset(
+        img_dir=DATA_TRAIN_IMG_PATH,
+        gt_dir=DATA_TRAIN_GT_PATH,
         image_transform=image_transform,
         mask_transform=mask_transform,
     )
