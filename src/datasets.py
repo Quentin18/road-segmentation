@@ -5,38 +5,47 @@ https://pytorch.org/tutorials/recipes/recipes/custom_dataset_transforms_loader.h
 https://stackoverflow.com/questions/50544730/how-do-i-split-a-custom-dataset-into-training-and-test-datasets
 """
 import os
-from typing import Callable, Optional, Tuple
+from typing import Callable, Tuple
 
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset, random_split
 
 
-class SatelliteImagesTrainDataset(Dataset):
-    """Training dataset of satellite images."""
+class SatelliteImagesDataset(Dataset):
+    """Dataset of satellite images."""
     def __init__(
         self,
-        root_dir: str,
-        image_transform: Optional[Callable] = None,
-        mask_transform: Optional[Callable] = None
+        img_dir: str,
+        gt_dir: str = None,
+        image_transform: Callable = None,
+        mask_transform: Callable = None
     ) -> None:
-        """Inits the satellite images training dataset.
+        """Inits a satellite images dataset. It works with both training and
+        testing datasets.
 
         Args:
-            root_dir (str): path of the directory with the `images` and
-            `groundtruth` directories.
+            img_dir (str): path of images directory.
+            gt_dir (str, optional): path of groundtruth directory.
+            Defaults to None.
             image_transform (Callable, optional): optional transform to be
             applied on an image. Defaults to None.
             mask_transform (Callable, optional): optional transform to be
             applied on a mask. Defaults to None.
         """
         # Directories paths
-        self.img_dir = os.path.join(root_dir, 'images')
-        self.gt_dir = os.path.join(root_dir, 'groundtruth')
+        self.img_dir = img_dir
+        self.gt_dir = gt_dir
 
         # Lists of images and masks names
-        self.images_names = os.listdir(self.img_dir)
-        self.masks_names = os.listdir(self.gt_dir)
+        if self.gt_dir is not None:
+            self.images_names = os.listdir(self.img_dir)
+            self.masks_names = os.listdir(self.gt_dir)
+        else:
+            self.images_names = [
+                f'{name}/{name}.png' for name in os.listdir(self.img_dir)
+            ]
+            self.masks_names = list()
 
         # Transforms
         self.image_transform = image_transform
@@ -64,6 +73,7 @@ class SatelliteImagesTrainDataset(Dataset):
 
     def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
         """Gets an image and its corresponding mask.
+        If no masks in the dataset, it returns `(image, 0)`.
 
         Args:
             index (int): index of the image in the list.
@@ -72,10 +82,11 @@ class SatelliteImagesTrainDataset(Dataset):
             Tuple[np.ndarray, np.ndarray]: image, mask.
         """
         img_path = os.path.join(self.img_dir, self.images_names[index])
-        mask_path = os.path.join(self.gt_dir, self.masks_names[index])
+        if self.gt_dir:
+            mask_path = os.path.join(self.gt_dir, self.masks_names[index])
 
         image = self._read_img(img_path)
-        mask = self._read_img(mask_path)
+        mask = self._read_img(mask_path) if self.gt_dir else 0
 
         # Apply image transformations
         if self.image_transform is not None:
@@ -86,71 +97,6 @@ class SatelliteImagesTrainDataset(Dataset):
             mask = self.mask_transform(mask)
 
         return image, mask
-
-
-class SatelliteImagesTestDataset(Dataset):
-    """Testing dataset of satellite images."""
-    def __init__(
-        self,
-        root_dir: str,
-        image_transform: Optional[Callable] = None,
-    ) -> None:
-        """Inits the satellite images training dataset.
-
-        Args:
-            root_dir (str): path of the directory with the `images` and
-            `groundtruth` directories.
-            image_transform (Callable, optional): optional transform to be
-            applied on an image. Defaults to None.
-        """
-        # Root directory path
-        self.root_dir = os.path.join(root_dir)
-
-        # Lists of images
-        self.images_names = os.listdir(self.root_dir)
-
-        # Transforms
-        self.image_transform = image_transform
-
-    @staticmethod
-    def _read_img(img_path: str) -> Image:
-        """Reads an image from its path.
-
-        Args:
-            img_path (str): image path.
-
-        Returns:
-            Image: PIL image.
-        """
-        return Image.open(img_path)
-
-    def __len__(self) -> int:
-        """Returns the number of images in the dataset.
-
-        Returns:
-            int: number of images.
-        """
-        return len(self.images_names)
-
-    def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
-        """Gets an image
-
-        Args:
-            index (int): index of the image in the list.
-
-        Returns:
-            Tuple[np.ndarray]: image
-        """
-        img_name = self.images_names[index]
-        img_path = os.path.join(self.root_dir, img_name, img_name + '.png')
-
-        image = self._read_img(img_path)
-
-        # Apply image transformations
-        if self.image_transform is not None:
-            image = self.image_transform(image)
-
-        return image
 
 
 def train_test_split(dataset: Dataset,

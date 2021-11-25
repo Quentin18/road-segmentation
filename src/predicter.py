@@ -10,6 +10,7 @@ from torchvision.utils import save_image
 from tqdm import tqdm
 
 from src.metrics import accuracy_score_tensors, f1_score_tensors
+from src.submission import masks_to_submission
 
 
 class Predicter:
@@ -35,6 +36,7 @@ class Predicter:
         self.device = device
         self.predictions_path = predictions_path
         self.data_loader = data_loader
+        self.predictions_filenames = list()
 
     def predict(self, proba_threshold: float = 0.25) -> Tuple[float, float]:
         """Predicts the masks of images.
@@ -50,6 +52,7 @@ class Predicter:
 
         # Init metrics lists
         accuracy_scores, f1_scores = list(), list()
+        avg_accuracy = avg_f1 = 0
 
         # Switch off autograd
         with torch.no_grad():
@@ -60,17 +63,19 @@ class Predicter:
                     t.set_description(desc=filename)
 
                     # Send the input to the device
-                    data, target = data.to(self.device), target.to(self.device)
+                    data = data.to(self.device)
+                    if target != 0:
+                        target = target.to(self.device)
 
                     # Make the predictions
                     output = self.model(data)
 
                     # Get labels
-                    target = (target > proba_threshold).type(torch.uint8)
                     output = (output > proba_threshold).type(torch.uint8)
 
                     # Compute metrics
-                    if target is not None:
+                    if target != 0:
+                        target = (target > proba_threshold).type(torch.uint8)
                         accuracy = accuracy_score_tensors(target, output)
                         f1 = f1_score_tensors(target, output)
                         t.set_postfix(acuracy=accuracy, f1=f1)
@@ -81,6 +86,7 @@ class Predicter:
                     output = (output * 255).type(torch.float32)
                     output_path = os.path.join(self.predictions_path, filename)
                     save_image(output, output_path)
+                    self.predictions_filenames.append(output_path)
 
         # Compute average metrics
         if accuracy_scores and f1_scores:
@@ -91,56 +97,10 @@ class Predicter:
 
         return avg_accuracy, avg_f1
 
-
-class PredicterSubmission:
-    """
-    Predicter class.
-    """
-    def __init__(
-        self,
-        model: torch.nn.Module,
-        device: str,
-        predictions_path: str,
-        data_loader: DataLoader,
-    ) -> None:
-        """Inits the predicter.
+    def create_submission(self, submission_filename: str) -> None:
+        """Creates a submission file from the predictions.
 
         Args:
-            model (torch.nn.Module): neural network model.
-            device (str): device (cpu or cuda).
-            predictions_path (str): path to the directory of predictions.
-            data_loader (DataLoader): data loader to predict.
+            submission_filename (str): submission csv file path.
         """
-        self.model = model
-        self.device = device
-        self.predictions_path = predictions_path
-        self.data_loader = data_loader
-
-    def predict(self, proba_threshold: float = 0.5) -> None:
-        """Predicts the masks of images.
-
-        Args:
-            proba_threshold (float): probability threshold.
-        """
-        # Set the model in evaluation mode
-        self.model.eval()
-
-        # Switch off autograd
-        with torch.no_grad():
-            # Loop over the dataset
-            for i, (data) in enumerate(
-                tqdm(self.data_loader, unit='batch')
-            ):
-                # Send the input to the device
-                data = data.to(self.device)
-
-                # Make the predictions
-                output = self.model(data)
-
-                # Save mask
-                output_path = os.path.join(
-                    self.predictions_path, f'prediction_{i + 1:03d}.png'
-                )
-                output = (output > proba_threshold) * 255
-                output = output.type(torch.float32)
-                save_image(output, output_path)
+        masks_to_submission(submission_filename, self.predictions_files_paths)

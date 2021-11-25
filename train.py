@@ -9,10 +9,11 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from src.datasets import SatelliteImagesTrainDataset, train_test_split
+from src.datasets import SatelliteImagesDataset, train_test_split
 from src.nets import UNet
-from src.path import (DATA_TRAIN_PATH, DEFAULT_LOSSES_PATH,
-                      DEFAULT_WEIGHTS_PATH, create_dirs, extract_archives)
+from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
+                      DEFAULT_LOSSES_PATH, DEFAULT_WEIGHTS_PATH, create_dirs,
+                      extract_archives)
 from src.plot_utils import plot_loss
 from src.trainer import Trainer
 
@@ -49,8 +50,9 @@ def main(args: argparse.Namespace):
     ])
 
     # Define dataset
-    dataset = SatelliteImagesTrainDataset(
-        root_dir=DATA_TRAIN_PATH,
+    dataset = SatelliteImagesDataset(
+        img_dir=DATA_TRAIN_IMG_PATH,
+        gt_dir=DATA_TRAIN_GT_PATH,
         image_transform=image_transform,
         mask_transform=mask_transform,
     )
