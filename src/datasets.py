@@ -103,11 +103,11 @@ class SatelliteImagesTestDataset(Dataset):
             image_transform (Callable, optional): optional transform to be
             applied on an image. Defaults to None.
         """
-        # Directories paths
-        self.img_dir = os.path.join(root_dir, 'images')
+        # Root directory path
+        self.root_dir = os.path.join(root_dir)
 
-        # Lists of images and masks names
-        self.images_names = os.listdir(self.img_dir)
+        # Lists of images
+        self.images_names = os.listdir(self.root_dir)
 
         # Transforms
         self.image_transform = image_transform
@@ -141,7 +141,8 @@ class SatelliteImagesTestDataset(Dataset):
         Returns:
             Tuple[np.ndarray]: image
         """
-        img_path = os.path.join(self.img_dir, self.images_names[index])
+        img_name = self.images_names[index]
+        img_path = os.path.join(self.root_dir, img_name, img_name + '.png')
 
         image = self._read_img(img_path)
 
