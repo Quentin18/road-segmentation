@@ -115,6 +115,7 @@ def plot_images(
     for i, (img, title) in enumerate(zip(images, titles)):
         ax[i].imshow(img)
         ax[i].set_title(title)
+        ax[i].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
 
     fig.tight_layout()
 
