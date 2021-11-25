@@ -113,6 +113,7 @@ ENV/
 # Data
 data/test_set_images/
 data/training/
+data/images_test
 
 # Out
 out/
