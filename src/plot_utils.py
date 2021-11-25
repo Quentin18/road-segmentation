@@ -54,23 +54,22 @@ def plot_loss(train_loss: list, test_loss: list, path: str = None) -> None:
         plt.savefig(path)
 
 
-def plot_validation_F1(F1_score: list, threshold: list,
+def plot_validation_F1(F1_score: list, threshold: list, optimum: int,
                        path: str = None) -> None:
     """Plots train and test loss.
 
     Args:
-        train_loss (list): train loss list.
-        test_loss (list): test loss list.
-        path(str, optional):
-        path to save the figure.
+        F1_score (list): F1_score list.
+        threshold (list): threshold of validation list.
+        optimum (int): index of the optimum threshold
+        path (str, optional): path to save the figure.
     """
-    optimum = np.argmax(F1_score)
     plt.style.use('ggplot')
     plt.figure()
     plt.plot(threshold, F1_score, label='F1 score')
     plt.plot(threshold[optimum], F1_score[optimum], marker="*", color="red",
              label='optimum')
-    plt.title('Validation on threshold paramter with F1 score')
+    plt.title('Validation on threshold parameter with F1 score')
     plt.xlabel('Threshold')
     plt.ylabel('F1 score')
     plt.legend(loc='lower left')
