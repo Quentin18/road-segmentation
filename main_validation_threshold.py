@@ -1,19 +1,19 @@
 import argparse
-import pickle
 import os
+import pickle
 
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from src.datasets import SatelliteImagesTrainDataset
+from src.datasets import SatelliteImagesDataset
 from src.nets import UNet
-from src.path import (DEFAULT_WEIGHTS_PATH, DATA_TRAIN_PATH,
-                      DEFAULT_PREDICTIONS_DIR, DEFAULT_PARAMETERS_PATH,
-                      create_dirs, extract_archives)
-from src.predicter import Predicter
+from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
+                      DEFAULT_PARAMETERS_PATH, DEFAULT_PREDICTIONS_DIR,
+                      DEFAULT_WEIGHTS_PATH, create_dirs, extract_archives)
 from src.plot_utils import plot_validation_F1
+from src.predicter import Predicter
 
 
 def main(args: argparse.Namespace) -> None:
@@ -33,6 +33,7 @@ def main(args: argparse.Namespace) -> None:
 
     # Define device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print('Device:', device)
     pin_memory = device == 'cuda'
 
     # Define transforms
@@ -47,8 +48,9 @@ def main(args: argparse.Namespace) -> None:
     ])
 
     # Define dataset
-    dataset = SatelliteImagesTrainDataset(
-        root_dir=DATA_TRAIN_PATH,
+    dataset = SatelliteImagesDataset(
+        img_dir=DATA_TRAIN_IMG_PATH,
+        gt_dir=DATA_TRAIN_GT_PATH,
         image_transform=image_transform,
         mask_transform=mask_transform,
     )
@@ -60,12 +62,12 @@ def main(args: argparse.Namespace) -> None:
 
     # Define loaders
     train_loader = DataLoader(
-            dataset=dataset,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=args.workers,
-            pin_memory=pin_memory,
-        )
+        dataset=dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.workers,
+        pin_memory=pin_memory,
+    )
 
     # Define neural net
     model = UNet()
@@ -84,19 +86,19 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # Run prediction
-    F1_score_list = list()
+    f1_score_list = list()
     for threshold in args.threshold_validation:
-        predicter.predict(proba_threshold=threshold)
-        F1_score_list.append()
+        _, f1 = predicter.predict(proba_threshold=threshold)
+        f1_score_list.append(f1)
 
-    optimum_threshold = args.threshold_validation[np.argmax[F1_score_list]]
+    optimum_threshold = args.threshold_validation[np.argmax(f1_score_list)]
     parameters = dict()
     parameters['threshold'] = optimum_threshold
+
     # Plot result
     path = os.path.join(os.path.dirname(DEFAULT_PARAMETERS_PATH),
                         'threshold.png')
-
-    plot_validation_F1(F1_score_list, args.threshold_validation, path=path)
+    plot_validation_F1(f1_score_list, args.threshold_validation, path=path)
 
     # Save optimum
     with open(DEFAULT_PARAMETERS_PATH, 'wb') as f:
@@ -110,8 +112,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=16,
-        help="input batch size for training (default: 16)",
+        default=1,
+        help="input batch size for training (default: 1)",
     )
     parser.add_argument(
         "--workers",
