@@ -19,7 +19,7 @@ DATA_TRAIN_PATH = os.path.join(DATA_DIR, 'training')
 # Training paths
 DEFAULT_LOSSES_PATH = os.path.join(MODELS_DIR, 'losses.pickle')
 DEFAULT_WEIGHTS_PATH = os.path.join(MODELS_DIR, 'weights.pt')
-DEFAULT_THRESHOLD_PATH = os.path.join(MODELS_DIR, 'threshold.pickle')
+DEFAULT_PARAMETERS_PATH = os.path.join(MODELS_DIR, 'parameters.pickle')
 
 # Testing paths
 DEFAULT_PREDICTIONS_DIR = os.path.join(OUT_DIR, 'predictions')
