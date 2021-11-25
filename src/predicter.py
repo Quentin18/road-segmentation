@@ -64,7 +64,8 @@ class Predicter:
 
                     # Send the input to the device
                     data = data.to(self.device)
-                    if isinstance(target, torch.Tensor):
+                    if target != 0:
+                        print("tertrt")
                         target = target.to(self.device)
 
                     # Make the predictions
@@ -74,7 +75,7 @@ class Predicter:
                     output = (output > proba_threshold).type(torch.uint8)
 
                     # Compute metrics
-                    if isinstance(target, torch.Tensor):
+                    if target != 0:
                         target = (target > proba_threshold).type(torch.uint8)
                         accuracy = accuracy_score_tensors(target, output)
                         f1 = f1_score_tensors(target, output)
@@ -89,7 +90,7 @@ class Predicter:
                     self.predictions_filenames.append(output_path)
 
         # Compute average metrics
-        if accuracy_scores and f1_scores:
+        if target != 0:
             avg_accuracy = sum(accuracy_scores).item() / len(accuracy_scores)
             avg_f1 = sum(f1_scores).item() / len(f1_scores)
         return avg_accuracy, avg_f1
