@@ -15,3 +15,6 @@
 
 - Other Python libraries:
     - [tqdm](https://github.com/tqdm/tqdm)
+
+- Other articles:
+    - [Early Stopping with PyTorch to Restrain your Model from Overfitting](https://medium.com/analytics-vidhya/early-stopping-with-pytorch-to-restrain-your-model-from-overfitting-dce6de4081c5)
