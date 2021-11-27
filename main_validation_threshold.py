@@ -1,27 +1,29 @@
-"""
-Predicting script.
-"""
 import argparse
-
+import os
+import pickle
+import numpy as np
 import torch
+
+from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from src.datasets import SatelliteImagesDataset, train_test_split
+from src.datasets import SatelliteImagesDataset
 from src.nets import UNet
 from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
-                      DEFAULT_PREDICTIONS_DIR, DEFAULT_WEIGHTS_PATH,
-                      create_dirs, extract_archives)
+                      DEFAULT_PARAMETERS_PATH, DEFAULT_PREDICTIONS_DIR,
+                      DEFAULT_WEIGHTS_PATH, create_dirs, extract_archives)
+from src.plot_utils import plot_validation_F1
 from src.predicter import Predicter
 
 
 def main(args: argparse.Namespace) -> None:
-    """Main to predict.
+    """Main to do validation on threshold parameter on F1 score
 
     Args:
         args (argparse.Namespace): namespace of arguments.
     """
-    print('== Start predicting ==')
+    print('== Start Validation on threshold on F1 score==')
 
     # Extract archives and create directories if needed
     create_dirs()
@@ -43,7 +45,7 @@ def main(args: argparse.Namespace) -> None:
     ])
     mask_transform = transforms.Compose([
         transforms.Resize((args.image_size, args.image_size)),
-        transforms.ToTensor(),
+        transforms.ToTensor()
     ])
 
     # Define dataset
@@ -59,31 +61,14 @@ def main(args: argparse.Namespace) -> None:
     print('Image size:', image.shape)
     print('Mask size:', mask.shape)
 
-    if args.split_ratio > 0:
-        # Split train test
-        train_set, test_set = train_test_split(
-            dataset=dataset,
-            test_ratio=args.split_ratio
-        )
-        print('Train size:', len(train_set))
-        print('Test size:', len(test_set))
-
-        # Define loader
-        test_loader = DataLoader(
-            dataset=test_set,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=args.workers,
-            pin_memory=pin_memory,
-        )
-    else:
-        test_loader = DataLoader(
-            dataset=dataset,
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=args.workers,
-            pin_memory=pin_memory,
-        )
+    # Define loaders
+    train_loader = DataLoader(
+        dataset=dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.workers,
+        pin_memory=pin_memory,
+    )
 
     # Define neural net
     model = UNet()
@@ -98,11 +83,33 @@ def main(args: argparse.Namespace) -> None:
         model=model,
         device=device,
         predictions_path=DEFAULT_PREDICTIONS_DIR,
-        data_loader=test_loader,
+        data_loader=train_loader,
     )
 
     # Run prediction
-    predicter.predict()
+    F1_score_list = list()
+    with tqdm(args.threshold_validation,  unit='iterate') as t:
+        for threshold in t:
+            t.set_description(desc=f"threshold = {threshold}")
+            avg_acc, avg_f1 = predicter.predict(proba_threshold=threshold)
+            F1_score_list.append(avg_f1)
+            t.set_postfix(avg_acc=avg_acc, avg_f1=avg_f1)
+    print(F1_score_list)
+    optimum_ind = np.argmax(F1_score_list)
+    optimum_threshold = args.threshold_validation[optimum_ind]
+    parameters = dict()
+    parameters['threshold'] = optimum_threshold
+
+    # Plot result
+    path = os.path.join(os.path.dirname(DEFAULT_PARAMETERS_PATH),
+                        'threshold.png')
+
+    plot_validation_F1(F1_score_list, args.threshold_validation, optimum_ind,
+                       path=path)
+
+    # Save optimum
+    with open(DEFAULT_PARAMETERS_PATH, 'wb') as f:
+        pickle.dump(parameters, f)
 
 
 if __name__ == "__main__":
@@ -134,17 +141,16 @@ if __name__ == "__main__":
         help="target input image size (default: 400)",
     )
     parser.add_argument(
-        "--split-ratio",
-        type=float,
-        default=0.2,
-        help="train test split ratio. 0 to train the whole dataset "
-             "(default: 0.2)",
-    )
-    parser.add_argument(
         "--seed",
         type=int,
         default=0,
         help="seed (default: 0)",
+    )
+    parser.add_argument(
+        "--threshold-validation",
+        type=list,
+        default=np.linspace(0.1, 0.9, 9),
+        help="threshold to test for validation"
     )
     args = parser.parse_args()
     main(args)

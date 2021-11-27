@@ -7,6 +7,9 @@ import time
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm, trange
+from tqdm.notebook import tnrange, tqdm_notebook
+
+from src.metrics import accuracy_score_tensors, f1_score_tensors
 
 
 class Trainer:
@@ -24,7 +27,9 @@ class Trainer:
         log_path: str,
         data_loader: DataLoader,
         valid_data_loader: DataLoader = None,
+        proba_threshold: float = 0.5,
         save_period: int = 5,
+        notebook: bool = False,
     ) -> None:
         """Inits the trainer.
 
@@ -39,8 +44,12 @@ class Trainer:
             data_loader (DataLoader): loader of train data.
             valid_data_loader (DataLoader, optional): loader of test data.
             Defaults to None.
+            proba_threshold (float, optional): probability threshold to make
+            predictions. Defaults to 0.5.
             save_period (int, optional): period to save weights and history.
             Defaults to 5.
+            notebook (bool, optional): True if training is done in a notebook
+            (to display progress bar properly). Defaults to False.
         """
         self.model = model
         self.criterion = criterion
@@ -51,6 +60,7 @@ class Trainer:
         self.log_path = log_path
         self.data_loader = data_loader
         self.valid_data_loader = valid_data_loader
+        self.proba_threshold = proba_threshold
         self.save_period = save_period
         self.do_validation = self.valid_data_loader is not None
 
@@ -62,10 +72,32 @@ class Trainer:
                 self.valid_data_loader.batch_size
 
         # Initialize a dictionary to store training history
-        self.history = {
-            'train_loss': list(),
-            'test_loss': list(),
-        }
+        self.history = dict()
+
+        # Set progress bar functions
+        self.tqdm = tqdm_notebook if notebook else tqdm
+        self.trange = tnrange if notebook else trange
+
+    def _init_history(self) -> None:
+        """
+        Inits the history.
+        """
+        for key in (
+            'train_loss',
+            'test_loss',
+            # 'train_accuracy', # TODO
+            # 'test_accuracy',
+            # 'train_f1',
+            # 'test_f1',
+        ):
+            self.history[key] = list()
+
+    def _update_history(self, **kwargs) -> None:
+        """
+        Updates the history.
+        """
+        for key, value in kwargs.items():
+            self.history[key].append(value)
 
     def _train_epoch(self, epoch: int) -> float:
         """Training for an epoch.
@@ -80,16 +112,16 @@ class Trainer:
         self.model.train()
 
         # Initialize the total training loss
-        total_train_loss = 0
+        total_train_loss = 0.0
 
         # Loop over the training set
-        with tqdm(
+        with self.tqdm(
             self.data_loader,
             desc=f'Train epoch {epoch}',
             unit='batch',
             leave=False,
         ) as t:
-            t.set_postfix(loss=None)
+            t.set_postfix(loss=None, accuracy=None, f1=None)
             for data, target in t:
                 # Send the input to the device
                 data, target = data.to(self.device), target.to(self.device)
@@ -103,9 +135,19 @@ class Trainer:
                 loss.backward()
                 self.optimizer.step()
 
+                # Predict labels
+                target = (target > self.proba_threshold).type(torch.uint8)
+                output = (output > self.proba_threshold).type(torch.uint8)
+
                 # Add the loss to the total training loss
-                t.set_postfix(loss=loss.item())
                 total_train_loss += loss.item()
+
+                # Update progress bar
+                t.set_postfix(
+                    loss=loss.item(),
+                    accuracy=accuracy_score_tensors(target, output),
+                    f1=f1_score_tensors(target, output),
+                )
 
         # Calculate the average training loss
         train_loss = total_train_loss / self.train_steps
@@ -125,18 +167,18 @@ class Trainer:
         self.model.eval()
 
         # Initialize the total validation loss
-        total_test_loss = 0
+        total_test_loss = 0.0
 
         # Switch off autograd
         with torch.no_grad():
             # Loop over the validation set
-            with tqdm(
+            with self.tqdm(
                 self.valid_data_loader,
                 desc=f'Valid epoch {epoch}',
                 unit='batch',
                 leave=False,
             ) as t:
-                t.set_postfix(loss=None)
+                t.set_postfix(loss=None, accuracy=None, f1=None)
                 for data, target in t:
                     # Send the input to the device
                     data, target = data.to(self.device), target.to(self.device)
@@ -145,12 +187,22 @@ class Trainer:
                     output = self.model(data)
                     loss = self.criterion(output, target)
 
+                    # Predict labels
+                    target = (target > self.proba_threshold).type(torch.uint8)
+                    output = (output > self.proba_threshold).type(torch.uint8)
+
                     # Add the loss to the total validation loss
-                    t.set_postfix(loss=loss.item())
                     total_test_loss += loss.item()
 
+                    # Update progress bar
+                    t.set_postfix(
+                        loss=loss.item(),
+                        accuracy=accuracy_score_tensors(target, output),
+                        f1=f1_score_tensors(target, output),
+                    )
+
         # Calculate the average validation loss
-        test_loss = total_test_loss / self.train_steps
+        test_loss = total_test_loss / self.valid_steps
 
         return test_loss
 
@@ -170,29 +222,35 @@ class Trainer:
         """
         Trains the model.
         """
+        # Init the history
+        self._init_history()
+
         print('Start training.')
         t_start = time.time()
 
         train_loss, test_loss = None, None
 
         # Loop over epochs
-        with trange(1, self.epochs + 1, desc='Training', unit='epoch') as t:
+        with self.trange(
+            1, self.epochs + 1, desc='Training', unit='epoch'
+        ) as t:
             t.set_postfix(train_loss=train_loss, test_loss=test_loss)
             for epoch in t:
                 # Train
                 train_loss = self._train_epoch(epoch)
-                self.history['train_loss'].append(train_loss)
+                self._update_history(train_loss=train_loss)
                 t.set_postfix(train_loss=train_loss, test_loss=test_loss)
 
                 if self.do_validation:
                     # Valid
                     test_loss = self._valid_epoch(epoch)
-                    self.history['test_loss'].append(test_loss)
+                    self._update_history(test_loss=test_loss)
                     t.set_postfix(train_loss=train_loss, test_loss=test_loss)
 
                 # Save model
                 if epoch % self.save_period == 0:
                     self._save_model()
 
+        self._save_model()
         t_end = time.time()
         print(f'End training. Time: {t_end - t_start:.3f}s.')

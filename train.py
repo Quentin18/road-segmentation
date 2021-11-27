@@ -9,15 +9,21 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from src.datasets import SatelliteImagesTrainDataset, train_test_split
+from src.datasets import SatelliteImagesDataset, train_test_split
 from src.nets import UNet
-from src.path import (DATA_TRAIN_PATH, DEFAULT_LOSSES_PATH,
-                      DEFAULT_WEIGHTS_PATH, create_dirs, extract_archives)
+from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
+                      DEFAULT_LOSSES_PATH, DEFAULT_WEIGHTS_PATH, create_dirs,
+                      extract_archives)
 from src.plot_utils import plot_loss
 from src.trainer import Trainer
 
 
 def main(args: argparse.Namespace):
+    """Main to train.
+
+    Args:
+        args (argparse.Namespace): namespace of arguments.
+    """
     print('== Start training ==')
 
     # Extract archives and create directories if needed
@@ -29,6 +35,7 @@ def main(args: argparse.Namespace):
 
     # Define device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print('Device:', device)
     pin_memory = device == 'cuda'
 
     # Define transforms
@@ -43,8 +50,9 @@ def main(args: argparse.Namespace):
     ])
 
     # Define dataset
-    dataset = SatelliteImagesTrainDataset(
-        root_dir=DATA_TRAIN_PATH,
+    dataset = SatelliteImagesDataset(
+        img_dir=DATA_TRAIN_IMG_PATH,
+        gt_dir=DATA_TRAIN_GT_PATH,
         image_transform=image_transform,
         mask_transform=mask_transform,
     )
@@ -125,8 +133,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=16,
-        help="input batch size for training (default: 16)",
+        default=1,
+        help="input batch size for training (default: 1)",
     )
     parser.add_argument(
         "--epochs",
@@ -166,7 +174,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--split-ratio",
-        type=int,
+        type=float,
         default=0.2,
         help="train test split ratio. 0 to train the whole dataset "
              "(default: 0.2)",
