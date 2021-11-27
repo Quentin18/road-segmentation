@@ -8,6 +8,11 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+# Add root directory to path
+from config import add_root_to_path
+add_root_to_path()
+
+# Imports from src
 from src.datasets import SatelliteImagesDataset
 from src.nets import UNet
 from src.path import (DATA_TEST_IMG_PATH, DEFAULT_SUBMISSION_MASK_DIR,

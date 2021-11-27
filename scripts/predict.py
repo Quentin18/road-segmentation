@@ -1,32 +1,33 @@
 """
-Traininig script.
+Predicting script.
 """
 import argparse
 
 import torch
-from torch.nn import BCEWithLogitsLoss
-from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+# Add root directory to path
+from config import add_root_to_path
+add_root_to_path()
+
+# Imports from src
 from src.datasets import SatelliteImagesDataset, train_test_split
 from src.nets import UNet
-# from src.SegNet import SegNet
 from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
-                      DEFAULT_LOSSES_PATH, DEFAULT_WEIGHTS_PATH, create_dirs,
-                      extract_archives)
-from src.plot_utils import plot_loss
-from src.trainer import Trainer
+                      DEFAULT_PREDICTIONS_DIR, DEFAULT_WEIGHTS_PATH,
+                      create_dirs, extract_archives)
+from src.predicter import Predicter
 
 
-def main(args: argparse.Namespace):
-    """Main to train.
+def main(args: argparse.Namespace) -> None:
+    """Main to predict.
 
     Args:
         args (argparse.Namespace): namespace of arguments.
     """
-    print('== Start training ==')
-
+    print('== Start predicting ==')
+    return
     # Extract archives and create directories if needed
     create_dirs()
     extract_archives()
@@ -47,7 +48,7 @@ def main(args: argparse.Namespace):
     ])
     mask_transform = transforms.Compose([
         transforms.Resize((args.image_size, args.image_size)),
-        transforms.ToTensor()
+        transforms.ToTensor(),
     ])
 
     # Define dataset
@@ -72,14 +73,7 @@ def main(args: argparse.Namespace):
         print('Train size:', len(train_set))
         print('Test size:', len(test_set))
 
-        # Define loaders
-        train_loader = DataLoader(
-            dataset=train_set,
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=args.workers,
-            pin_memory=pin_memory,
-        )
+        # Define loader
         test_loader = DataLoader(
             dataset=test_set,
             batch_size=args.batch_size,
@@ -88,67 +82,43 @@ def main(args: argparse.Namespace):
             pin_memory=pin_memory,
         )
     else:
-        train_loader = DataLoader(
+        test_loader = DataLoader(
             dataset=dataset,
             batch_size=args.batch_size,
             shuffle=True,
             num_workers=args.workers,
             pin_memory=pin_memory,
         )
-        test_loader = None
 
     # Define neural net
     model = UNet()
-    # model = SegNet()
     model.to(device)
 
-    # Define a loss function and optimizer
-    criterion = BCEWithLogitsLoss()
-    optimizer = Adam(model.parameters(), lr=args.lr)
+    # Load weights
+    state_dict = torch.load(args.weights_path, map_location=device)
+    model.load_state_dict(state_dict)
 
-    trainer = Trainer(
+    # Create predicter
+    predicter = Predicter(
         model=model,
-        criterion=criterion,
-        optimizer=optimizer,
-        epochs=args.epochs,
         device=device,
-        weights_path=args.weights_path,
-        log_path=args.log_path,
-        data_loader=train_loader,
-        valid_data_loader=test_loader,
+        predictions_path=DEFAULT_PREDICTIONS_DIR,
+        data_loader=test_loader,
     )
-    trainer.train()
 
-    # Plot train test loss
-    # TODO to improve
-    plot_loss(
-        train_loss=trainer.history['train_loss'],
-        test_loss=trainer.history['test_loss'],
-        path=DEFAULT_LOSSES_PATH.replace('.pickle', '.png'),
-    )
+    # Run prediction
+    predicter.predict()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Training U-Net model for road segmentation"
+        description="Predicting U-Net model for road segmentation"
     )
     parser.add_argument(
         "--batch-size",
         type=int,
         default=1,
         help="input batch size for training (default: 1)",
-    )
-    parser.add_argument(
-        "--epochs",
-        type=int,
-        default=100,
-        help="number of epochs to train (default: 100)",
-    )
-    parser.add_argument(
-        "--lr",
-        type=float,
-        default=1e-3,
-        help="initial learning rate (default: 1e-3)",
     )
     parser.add_argument(
         "--workers",
@@ -161,12 +131,6 @@ if __name__ == "__main__":
         type=str,
         default=DEFAULT_WEIGHTS_PATH,
         help="output weights path"
-    )
-    parser.add_argument(
-        "--log-path",
-        type=str,
-        default=DEFAULT_LOSSES_PATH,
-        help="output log path"
     )
     parser.add_argument(
         "--image-size",

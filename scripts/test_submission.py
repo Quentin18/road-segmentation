@@ -1,5 +1,10 @@
 import os
 
+# Add root directory to path
+from config import add_root_to_path
+add_root_to_path()
+
+# Imports from src
 from src.path import OUT_DIR
 from src.submission import masks_to_submission, submission_to_masks
 

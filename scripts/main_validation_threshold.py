@@ -8,6 +8,11 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+# Add root directory to path
+from config import add_root_to_path
+add_root_to_path()
+
+# Imports from src
 from src.datasets import SatelliteImagesDataset
 from src.nets import UNet
 from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
@@ -88,7 +93,7 @@ def main(args: argparse.Namespace) -> None:
 
     # Run prediction
     F1_score_list = list()
-    with tqdm(args.threshold_validation,  unit='iterate') as t:
+    with tqdm(args.threshold_validation, unit='iterate') as t:
         for threshold in t:
             t.set_description(desc=f"threshold = {threshold}")
             avg_acc, avg_f1 = predicter.predict(proba_threshold=threshold)
