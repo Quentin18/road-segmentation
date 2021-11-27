@@ -38,6 +38,22 @@ class Predicter:
         self.data_loader = data_loader
         self.predictions_filenames = list()
 
+    def _predict_labels(
+        self,
+        output: torch.Tensor,
+        proba_threshold: float,
+    ) -> torch.Tensor:
+        """Predicts the labels for an output.
+
+        Args:
+            output (torch.Tensor): tensor output.
+            proba_threshold (float): probability threshold.
+
+        Returns:
+            torch.Tensor: tensor of 0 and 1.
+        """
+        return (output > proba_threshold).type(torch.uint8)
+
     def predict(self, proba_threshold: float = 0.25) -> Tuple[float, float]:
         """Predicts the masks of images.
 
@@ -71,11 +87,11 @@ class Predicter:
                     output = self.model(data)
 
                     # Get labels
-                    output = (output > proba_threshold).type(torch.uint8)
+                    output = self._predict_labels(output, proba_threshold)
 
                     # Compute metrics
                     if target.dim() != 1:
-                        target = (target > proba_threshold).type(torch.uint8)
+                        target = self._predict_labels(target, proba_threshold)
                         accuracy = accuracy_score_tensors(target, output)
                         f1 = f1_score_tensors(target, output)
                         t.set_postfix(acuracy=accuracy, f1=f1)
@@ -92,6 +108,7 @@ class Predicter:
         if target.dim() != 1:
             avg_accuracy = sum(accuracy_scores).item() / len(accuracy_scores)
             avg_f1 = sum(f1_scores).item() / len(f1_scores)
+
         return avg_accuracy, avg_f1
 
     def create_submission(self, submission_filename: str) -> None:
