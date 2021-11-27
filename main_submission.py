@@ -76,19 +76,26 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # Run prediction
-    predicter.predict(args.proba_threshold)
+    predicter.predict(args.predict_threshold)
 
     # CSV submission
     print("== Creation of mask images ==")
     mask_path_submission = os.path.join(OUT_DIR, 'submission')
     mask_filename = os.listdir(mask_path_submission)
     masks_to_submission(os.path.join(OUT_DIR, 'UNet_submission.csv'),
-                        mask_filename)
+                        mask_filename,
+                        foreground_threshold=args.proba_threshold)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Predicting U-Net model for road segmentation"
+    )
+    parser.add_argument(
+        "--predict_threshold",
+        type=float,
+        default=0.6,
+        help="threshold for predicct (default: 0.6)",
     )
     parser.add_argument(
         "--proba_threshold",
