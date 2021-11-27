@@ -21,7 +21,6 @@ class Trainer:
         model: torch.nn.Module,
         criterion: torch.nn.modules.loss._Loss,
         optimizer: torch.optim.Optimizer,
-        epochs: int,
         device: str,
         weights_path: str,
         log_path: str,
@@ -29,6 +28,7 @@ class Trainer:
         valid_data_loader: DataLoader = None,
         proba_threshold: float = 0.5,
         save_period: int = 5,
+        early_stopping: bool = True,
         notebook: bool = False,
     ) -> None:
         """Inits the trainer.
@@ -37,24 +37,24 @@ class Trainer:
             model (torch.nn.Module): neural network model.
             criterion (torch.nn.modules.loss._Loss): loss function.
             optimizer (torch.optim.Optimizer): optimizer function.
-            epochs (int): number of epochs.
             device (str): device (cpu or cuda).
             weights_path (str): path to save weights for the model.
             log_path (str): path to save training history.
             data_loader (DataLoader): loader of train data.
-            valid_data_loader (DataLoader, optional): loader of test data.
+            valid_data_loader (DataLoader, optional): loader of valid data.
             Defaults to None.
             proba_threshold (float, optional): probability threshold to make
             predictions. Defaults to 0.5.
             save_period (int, optional): period to save weights and history.
             Defaults to 5.
+            early_stopping (bool, optional): True to enable early stopping
+            callback. Defaults to True.
             notebook (bool, optional): True if training is done in a notebook
             (to display progress bar properly). Defaults to False.
         """
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
-        self.epochs = epochs
         self.device = device
         self.weights_path = weights_path
         self.log_path = log_path
@@ -74,24 +74,42 @@ class Trainer:
         # Initialize the history
         self.history = History()
 
+        # Initialize the EarlyStopping callback
+        self.early_stopping = EarlyStopping() if early_stopping else None
+
         # Set progress bar functions
         self.tqdm = tqdm_notebook if notebook else tqdm
         self.trange = tnrange if notebook else trange
 
-    def _train_epoch(self, epoch: int) -> float:
+    def _predict_labels(self, output: torch.Tensor) -> torch.Tensor:
+        """Predicts the labels for an output.
+
+        Args:
+            output (torch.Tensor): tensor output.
+
+        Returns:
+            torch.Tensor: tensor of 0 and 1.
+        """
+        return (output > self.proba_threshold).type(torch.uint8)
+
+    def _train_epoch(self, epoch: int) -> dict:
         """Training for an epoch.
 
         Args:
             epoch (int): number of the epoch.
 
         Returns:
-            float: train loss.
+            dict: training metrics.
         """
         # Set the model in training mode
         self.model.train()
 
-        # Initialize the total training loss
-        total_train_loss = 0.0
+        # Initialize metrics
+        metrics = {
+            'train_loss': 0.0,
+            'train_accuracy': 0.0,
+            'train_f1': 0.0,
+        }
 
         # Loop over the training set
         with self.tqdm(
@@ -100,7 +118,7 @@ class Trainer:
             unit='batch',
             leave=False,
         ) as t:
-            t.set_postfix(loss=None, accuracy=None, f1=None)
+            t.set_postfix(metrics)
             for data, target in t:
                 # Send the input to the device
                 data, target = data.to(self.device), target.to(self.device)
@@ -115,38 +133,42 @@ class Trainer:
                 self.optimizer.step()
 
                 # Predict labels
-                target = (target > self.proba_threshold).type(torch.uint8)
-                output = (output > self.proba_threshold).type(torch.uint8)
+                target = self._predict_labels(target)
+                output = self._predict_labels(output)
 
-                # Add the loss to the total training loss
-                total_train_loss += loss.item()
+                # Update metrics
+                metrics['train_loss'] += loss.item()
+                metrics['train_accuracy'] += accuracy_score_tensors(target,
+                                                                    output)
+                metrics['train_f1'] += f1_score_tensors(target, output)
 
                 # Update progress bar
-                t.set_postfix(
-                    loss=loss.item(),
-                    accuracy=accuracy_score_tensors(target, output),
-                    f1=f1_score_tensors(target, output),
-                )
+                t.set_postfix(metrics)
 
-        # Calculate the average training loss
-        train_loss = total_train_loss / self.train_steps
+        # Average metrics
+        for key in metrics:
+            metrics[key] /= self.train_steps
 
-        return train_loss
+        return metrics
 
-    def _valid_epoch(self, epoch: int) -> float:
+    def _valid_epoch(self, epoch: int) -> dict:
         """Validating for an epoch.
 
         Args:
             epoch (int): number of the epoch.
 
         Returns:
-            float: test loss.
+            dict: validation metrics.
         """
         # Set the model in evaluation mode
         self.model.eval()
 
-        # Initialize the total validation loss
-        total_test_loss = 0.0
+        # Initialize metrics
+        metrics = {
+            'valid_loss': 0.0,
+            'valid_accuracy': 0.0,
+            'valid_f1': 0.0,
+        }
 
         # Switch off autograd
         with torch.no_grad():
@@ -157,7 +179,7 @@ class Trainer:
                 unit='batch',
                 leave=False,
             ) as t:
-                t.set_postfix(loss=None, accuracy=None, f1=None)
+                t.set_postfix(metrics)
                 for data, target in t:
                     # Send the input to the device
                     data, target = data.to(self.device), target.to(self.device)
@@ -167,23 +189,23 @@ class Trainer:
                     loss = self.criterion(output, target)
 
                     # Predict labels
-                    target = (target > self.proba_threshold).type(torch.uint8)
-                    output = (output > self.proba_threshold).type(torch.uint8)
+                    target = self._predict_labels(target)
+                    output = self._predict_labels(output)
 
-                    # Add the loss to the total validation loss
-                    total_test_loss += loss.item()
+                    # Update metrics
+                    metrics['valid_loss'] += loss.item()
+                    metrics['valid_accuracy'] += accuracy_score_tensors(target,
+                                                                        output)
+                    metrics['valid_f1'] += f1_score_tensors(target, output)
 
                     # Update progress bar
-                    t.set_postfix(
-                        loss=loss.item(),
-                        accuracy=accuracy_score_tensors(target, output),
-                        f1=f1_score_tensors(target, output),
-                    )
+                    t.set_postfix(metrics)
 
-        # Calculate the average validation loss
-        test_loss = total_test_loss / self.valid_steps
+        # Average metrics
+        for key in metrics:
+            metrics[key] /= self.valid_steps
 
-        return test_loss
+        return metrics
 
     def _save_model(self) -> None:
         """
@@ -196,9 +218,12 @@ class Trainer:
         # Save history
         self.history.save(self.log_path)
 
-    def train(self) -> None:
+    def train(self, epochs: int) -> None:
         """
         Trains the model.
+
+        Args:
+            epochs (int): number of epochs.
         """
         # Reset the history
         self.history.reset()
@@ -206,24 +231,30 @@ class Trainer:
         print('Start training.')
         t_start = time.time()
 
-        train_loss, test_loss = None, None
+        postfix = dict()
 
         # Loop over epochs
-        with self.trange(
-            1, self.epochs + 1, desc='Training', unit='epoch'
-        ) as t:
-            t.set_postfix(train_loss=train_loss, test_loss=test_loss)
+        with self.trange(1, epochs + 1, desc='Training', unit='epoch') as t:
             for epoch in t:
                 # Train
-                train_loss = self._train_epoch(epoch)
-                self.history.update(train_loss=train_loss)
-                t.set_postfix(train_loss=train_loss, test_loss=test_loss)
+                loss_metrics = self._train_epoch(epoch)
+                self.history.update(**loss_metrics)
+                postfix.update(loss_metrics)
+
+                # Early stopping check
+                train_loss = loss_metrics['train_loss']
+                if self.early_stopping and self.early_stopping(train_loss):
+                    print(f'EarlyStopping: Stop training at epoch {epoch}.')
+                    break
 
                 if self.do_validation:
                     # Valid
-                    test_loss = self._valid_epoch(epoch)
-                    self.history.update(test_loss=test_loss)
-                    t.set_postfix(train_loss=train_loss, test_loss=test_loss)
+                    valid_metrics = self._valid_epoch(epoch)
+                    self.history.update(**valid_metrics)
+                    postfix.update(valid_metrics)
+
+                # Update progress bar
+                t.set_postfix(postfix)
 
                 # Save model
                 if epoch % self.save_period == 0:
@@ -236,7 +267,7 @@ class Trainer:
 
 class History:
     """
-    History class to save the losses and other metrics during a training.
+    History handler to save the losses and other metrics during a training.
     """
     def __init__(self) -> None:
         self.epoch_metrics = dict()
@@ -265,3 +296,43 @@ class History:
         """
         with open(path, 'wb') as f:
             pickle.dump(self.epoch_metrics, f)
+
+
+class EarlyStopping:
+    """
+    EarlyStopping handler can be used to stop the training if no improvement
+    after a given number of events.
+    """
+    def __init__(self, min_delta: float = 0.0, patience: int = 5) -> None:
+        """Inits the EarlyStopping handler.
+
+        Args:
+            min_delta (float, optional): a minimum loss decrease to qualify as
+            an improvement. Defaults to 0.0.
+            patience (int, optional): number of events to wait if no
+            improvement and then stop the training. Defaults to 5.
+        """
+        self.min_delta = min_delta
+        self.patience = patience
+        self.wait = 0
+        self.best_loss = None
+
+    def __call__(self, current_loss: float) -> bool:
+        """Returns True if training needs to be stopping, False else.
+
+        Args:
+            current_loss (float): loss of the current epoch.
+
+        Returns:
+            bool: stop training.
+        """
+        if self.best_loss is None:
+            self.best_loss = current_loss
+        elif current_loss < self.best_loss - self.min_delta:
+            self.best_loss = current_loss
+            self.wait = 1
+        else:
+            if self.wait >= self.patience:
+                return True
+            self.wait += 1
+        return False
