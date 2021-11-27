@@ -1,32 +1,20 @@
 import torch.nn as nn
 import torch.nn.functional as F
-import argparse
-
-parser = argparse.ArgumentParser(description='PyTorch SegNet example')
-parser.add_argument('--batch-size', type=int, default=1, metavar='N',
-                    help='training batch-size (default: 1)')
-parser.add_argument('--momentum', type=float, default=0.5,
-                    metavar='MOM', help='SGD momentum (default: 0.5)')
-parser.add_argument('--seed', type=int, default=0, metavar='S',
-                    help='random seed (default: 1)')
-parser.add_argument('--in-chn', type=int, default=3, metavar='IN',
-                    help='input image channels (default: 3 (RGB Image))')
-parser.add_argument('--out-chn', type=int, default=1, metavar='OUT',
-                    help='output channels/semantic classes (default: 1)')
-
-hyperparam = parser.parse_args()
 
 
 class SegNet(nn.Module):
     """
     SegNet neural network.
     """
-    def __init__(self, BN_momentum=hyperparam.momentum):
+    def __init__(self, BN_momentum=0.5):
         super(SegNet, self).__init__()
 
         # SegNet Architecture
         # Takes input of size in_chn = 3 (RGB images have 3 channels)
         # Outputs size label_chn (N # of classes)
+
+        self.in_chn = 3
+        self.out_chn = 1
 
         # ENCODING consists of 5 stages
         # Stage 1, 2 has 2 layers of Convolution + Batch Normalization +
@@ -36,9 +24,6 @@ class SegNet(nn.Module):
 
         # General Max Pool 2D for ENCODING layers
         # Pooling indices are stored for Upsampling in DECODING layers
-
-        self.in_chn = hyperparam.in_chn
-        self.out_chn = hyperparam.out_chn
 
         self.MaxEn = nn.MaxPool2d(2, stride=2, return_indices=True)
 
