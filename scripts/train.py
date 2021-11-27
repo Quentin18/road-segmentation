@@ -15,8 +15,7 @@ add_root_to_path()
 
 # Imports from src
 from src.datasets import SatelliteImagesDataset, train_test_split
-from src.models import UNet
-# from src.models import SegNet
+from src.models import SegNet, UNet
 from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
                       DEFAULT_LOSSES_PATH, DEFAULT_WEIGHTS_PATH, create_dirs,
                       extract_archives)
@@ -31,6 +30,7 @@ def main(args: argparse.Namespace):
         args (argparse.Namespace): namespace of arguments.
     """
     print('== Start training ==')
+
     # Extract archives and create directories if needed
     create_dirs()
     extract_archives()
@@ -102,8 +102,8 @@ def main(args: argparse.Namespace):
         test_loader = None
 
     # Define neural net
-    model = UNet()
-    # model = SegNet()
+    model = SegNet()
+    # model = UNet()
     model.to(device)
 
     # Define a loss function and optimizer
@@ -114,20 +114,19 @@ def main(args: argparse.Namespace):
         model=model,
         criterion=criterion,
         optimizer=optimizer,
-        epochs=args.epochs,
         device=device,
         weights_path=args.weights_path,
         log_path=args.log_path,
         data_loader=train_loader,
         valid_data_loader=test_loader,
     )
-    trainer.train()
+    trainer.train(args.epochs)
 
     # Plot train test loss
     # TODO to improve
     plot_loss(
-        train_loss=trainer.history['train_loss'],
-        test_loss=trainer.history['test_loss'],
+        train_loss=trainer.history.epoch_metrics['train_loss'],
+        test_loss=trainer.history.epoch_metrics['valid_loss'],
         path=DEFAULT_LOSSES_PATH.replace('.pickle', '.png'),
     )
 
