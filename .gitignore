@@ -114,7 +114,7 @@ ENV/
 data/test_set_images/
 data/training/
 data/images_test
-
+data/augmented
 # Out
 out/
 
