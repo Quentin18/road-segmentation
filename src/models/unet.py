@@ -1,5 +1,5 @@
 """
-Neural networks.
+UNet implementation.
 """
 from collections import OrderedDict
 

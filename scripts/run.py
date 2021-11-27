@@ -14,7 +14,7 @@ add_root_to_path()
 
 # Imports from src
 from src.datasets import SatelliteImagesDataset
-from src.nets import UNet
+from src.models import UNet
 from src.path import (DATA_TEST_IMG_PATH, DEFAULT_SUBMISSION_MASK_DIR,
                       DEFAULT_WEIGHTS_PATH, OUT_DIR, create_dirs,
                       extract_archives)

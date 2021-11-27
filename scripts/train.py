@@ -15,8 +15,8 @@ add_root_to_path()
 
 # Imports from src
 from src.datasets import SatelliteImagesDataset, train_test_split
-from src.nets import UNet
-# from src.SegNet import SegNet
+from src.models import UNet
+# from src.models import SegNet
 from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
                       DEFAULT_LOSSES_PATH, DEFAULT_WEIGHTS_PATH, create_dirs,
                       extract_archives)
