@@ -71,33 +71,12 @@ class Trainer:
             self.valid_steps = len(self.valid_data_loader.dataset) // \
                 self.valid_data_loader.batch_size
 
-        # Initialize a dictionary to store training history
-        self.history = dict()
+        # Initialize the history
+        self.history = History()
 
         # Set progress bar functions
         self.tqdm = tqdm_notebook if notebook else tqdm
         self.trange = tnrange if notebook else trange
-
-    def _init_history(self) -> None:
-        """
-        Inits the history.
-        """
-        for key in (
-            'train_loss',
-            'test_loss',
-            # 'train_accuracy', # TODO
-            # 'test_accuracy',
-            # 'train_f1',
-            # 'test_f1',
-        ):
-            self.history[key] = list()
-
-    def _update_history(self, **kwargs) -> None:
-        """
-        Updates the history.
-        """
-        for key, value in kwargs.items():
-            self.history[key].append(value)
 
     def _train_epoch(self, epoch: int) -> float:
         """Training for an epoch.
@@ -215,15 +194,14 @@ class Trainer:
         torch.save(weights, self.weights_path)
 
         # Save history
-        with open(self.log_path, 'wb') as f:
-            pickle.dump(self.history, f)
+        self.history.save(self.log_path)
 
     def train(self) -> None:
         """
         Trains the model.
         """
-        # Init the history
-        self._init_history()
+        # Reset the history
+        self.history.reset()
 
         print('Start training.')
         t_start = time.time()
@@ -238,13 +216,13 @@ class Trainer:
             for epoch in t:
                 # Train
                 train_loss = self._train_epoch(epoch)
-                self._update_history(train_loss=train_loss)
+                self.history.update(train_loss=train_loss)
                 t.set_postfix(train_loss=train_loss, test_loss=test_loss)
 
                 if self.do_validation:
                     # Valid
                     test_loss = self._valid_epoch(epoch)
-                    self._update_history(test_loss=test_loss)
+                    self.history.update(test_loss=test_loss)
                     t.set_postfix(train_loss=train_loss, test_loss=test_loss)
 
                 # Save model
@@ -254,3 +232,36 @@ class Trainer:
         self._save_model()
         t_end = time.time()
         print(f'End training. Time: {t_end - t_start:.3f}s.')
+
+
+class History:
+    """
+    History class to save the losses and other metrics during a training.
+    """
+    def __init__(self) -> None:
+        self.epoch_metrics = dict()
+
+    def reset(self) -> None:
+        """
+        Resets the history.
+        """
+        self.epoch_metrics.clear()
+
+    def update(self, **kwargs) -> None:
+        """
+        Updates the history.
+        """
+        for key, value in kwargs.items():
+            if key not in self.epoch_metrics:
+                self.epoch_metrics[key] = [value]
+            else:
+                self.epoch_metrics[key].append(value)
+
+    def save(self, path: str) -> None:
+        """Saves the history in a pickle file.
+
+        Args:
+            path (str): path of the pickle file.
+        """
+        with open(path, 'wb') as f:
+            pickle.dump(self.epoch_metrics, f)
