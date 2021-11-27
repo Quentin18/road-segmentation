@@ -11,6 +11,7 @@ from torchvision import transforms
 
 from src.datasets import SatelliteImagesDataset, train_test_split
 from src.nets import UNet
+# from src.SegNet import SegNet
 from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
                       DEFAULT_LOSSES_PATH, DEFAULT_WEIGHTS_PATH, create_dirs,
                       extract_archives)
@@ -98,6 +99,7 @@ def main(args: argparse.Namespace):
 
     # Define neural net
     model = UNet()
+    # model = SegNet()
     model.to(device)
 
     # Define a loss function and optimizer
