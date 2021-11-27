@@ -27,7 +27,7 @@ def main(args: argparse.Namespace) -> None:
         args (argparse.Namespace): namespace of arguments.
     """
     print('== Start predicting ==')
-    return
+
     # Extract archives and create directories if needed
     create_dirs()
     extract_archives()
