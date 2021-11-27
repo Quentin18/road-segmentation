@@ -153,10 +153,8 @@ def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
     im = io.imread(os.path.join(OUT_DIR, 'submission', mask_filename))
     for j in range(0, im.shape[1], patch_size):
         for i in range(0, im.shape[0], patch_size):
-            if im[i, j, 0] == 0:
-                label = 0
-            else:
-                label = 1
+            patch = im[i:i + patch_size, j:j + patch_size]
+            label = patch_to_label(patch, foreground_threshold)
             yield f'{img_number:03d}_{j}_{i},{label}'
 
 
