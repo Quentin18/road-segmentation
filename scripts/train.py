@@ -102,8 +102,8 @@ def main(args: argparse.Namespace):
         test_loader = None
 
     # Define neural net
-    model = SegNet()
-    # model = UNet()
+    # model = SegNet()
+    model = UNet()
     model.to(device)
 
     # Define a loss function and optimizer
@@ -119,6 +119,7 @@ def main(args: argparse.Namespace):
         log_path=args.log_path,
         data_loader=train_loader,
         valid_data_loader=test_loader,
+        notebook=args.notebook,
     )
     trainer.train(args.epochs)
 
@@ -189,6 +190,11 @@ if __name__ == "__main__":
         type=int,
         default=0,
         help="seed (default: 0)",
+    )
+    parser.add_argument(
+        "--notebook",
+        action="store_true",
+        help="notebook mode",
     )
     args = parser.parse_args()
     main(args)
