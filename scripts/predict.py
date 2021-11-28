@@ -13,7 +13,7 @@ add_root_to_path()
 
 # Imports from src
 from src.datasets import SatelliteImagesDataset, train_test_split
-from src.models import UNet
+from src.models import SegNet, UNet
 from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
                       DEFAULT_PREDICTIONS_DIR, DEFAULT_WEIGHTS_PATH,
                       create_dirs, extract_archives)
@@ -68,7 +68,7 @@ def main(args: argparse.Namespace) -> None:
         # Split train test
         train_set, test_set = train_test_split(
             dataset=dataset,
-            test_ratio=args.split_ratio
+            test_ratio=args.split_ratio,
         )
         print('Train size:', len(train_set))
         print('Test size:', len(test_set))
@@ -90,12 +90,19 @@ def main(args: argparse.Namespace) -> None:
             pin_memory=pin_memory,
         )
 
-    # Define neural net
-    model = UNet()
+    # Define model
+    if args.model == 'unet':
+        model = UNet()
+    elif args.model == 'segnet':
+        model = SegNet()
+    else:
+        print(f'Error: unknown model {args.model}')
+        return
+    print('Model:', args.model)
     model.to(device)
 
-    # Load weights
-    state_dict = torch.load(args.weights_path, map_location=device)
+    # Load model
+    state_dict = torch.load(args.model_path, map_location=device)
     model.load_state_dict(state_dict)
 
     # Create predicter
@@ -107,49 +114,57 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # Run prediction
-    predicter.predict()
+    accuracy, f1 = predicter.predict(proba_threshold=0.25)
+    print('Accuracy:', accuracy)
+    print('F1 score:', f1)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Predicting U-Net model for road segmentation"
+        description='Predicting for road segmentation',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--batch-size",
+        '--batch-size',
         type=int,
         default=1,
-        help="input batch size for training (default: 1)",
+        help='input batch size for training',
     )
     parser.add_argument(
-        "--workers",
-        type=int,
-        default=4,
-        help="number of workers for data loading (default: 4)",
-    )
-    parser.add_argument(
-        "--weights-path",
-        type=str,
-        default=DEFAULT_WEIGHTS_PATH,
-        help="output weights path"
-    )
-    parser.add_argument(
-        "--image-size",
+        '--image-size',
         type=int,
         default=400,
-        help="target input image size (default: 400)",
+        help='target input image size',
     )
     parser.add_argument(
-        "--split-ratio",
-        type=float,
-        default=0.2,
-        help="train test split ratio. 0 to train the whole dataset "
-             "(default: 0.2)",
+        '--model',
+        choices=('unet', 'segnet'),
+        default='unet',
+        help='model to use',
     )
     parser.add_argument(
-        "--seed",
+        '--model-path',
+        type=str,
+        default=DEFAULT_WEIGHTS_PATH,
+        help='output model path',
+    )
+    parser.add_argument(
+        '--seed',
         type=int,
         default=0,
-        help="seed (default: 0)",
+        help='seed',
+    )
+    parser.add_argument(
+        '--split-ratio',
+        type=float,
+        default=0.2,
+        help='train test split ratio. 0 to train the whole dataset',
+    )
+    parser.add_argument(
+        '--workers',
+        type=int,
+        default=2,
+        help='number of workers for data loading',
     )
     args = parser.parse_args()
     main(args)

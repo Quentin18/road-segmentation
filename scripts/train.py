@@ -187,6 +187,12 @@ if __name__ == '__main__':
         help='model to use',
     )
     parser.add_argument(
+        '--model-path',
+        type=str,
+        default=None,
+        help='output model path',
+    )
+    parser.add_argument(
         '--notebook',
         action='store_true',
         help='notebook mode',
@@ -202,12 +208,6 @@ if __name__ == '__main__':
         type=float,
         default=0.2,
         help='train test split ratio. 0 to train the whole dataset',
-    )
-    parser.add_argument(
-        '--model-path',
-        type=str,
-        default=None,
-        help='output model path',
     )
     parser.add_argument(
         '--workers',
