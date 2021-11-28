@@ -40,7 +40,7 @@ def plot_loss(train_loss: list, test_loss: list, path: str = None) -> None:
     Args:
         train_loss (list): train loss list.
         test_loss (list): test loss list.
-        path(str, optional): path to save the figure.
+        path(str, optional): path to save the figure. Defaults to None.
     """
     plt.style.use('ggplot')
     plt.plot(train_loss, label='Train loss')
@@ -53,11 +53,12 @@ def plot_loss(train_loss: list, test_loss: list, path: str = None) -> None:
         plt.savefig(path)
 
 
-def plot_history(epoch_metrics: dict) -> None:
+def plot_history(epoch_metrics: dict, path: str = None) -> None:
     """Plots metrics from an history.
 
     Args:
         epoch_metrics (dict): dictionary of metrics.
+        path(str, optional): path to save the figure. Defaults to None.
     """
     plt.style.use('ggplot')
 
@@ -78,6 +79,10 @@ def plot_history(epoch_metrics: dict) -> None:
     ax_accuracy_f1.legend()
 
     fig.tight_layout()
+
+    # Save figure
+    if path is not None:
+        plt.savefig(path)
 
 
 def plot_validation_F1(F1_score: list, threshold: list, optimum: int,
