@@ -43,7 +43,6 @@ def plot_loss(train_loss: list, test_loss: list, path: str = None) -> None:
         path(str, optional): path to save the figure.
     """
     plt.style.use('ggplot')
-    plt.figure()
     plt.plot(train_loss, label='Train loss')
     plt.plot(test_loss, label='Test loss')
     plt.title('Training Loss')
@@ -52,6 +51,33 @@ def plot_loss(train_loss: list, test_loss: list, path: str = None) -> None:
     plt.legend(loc='lower left')
     if path is not None:
         plt.savefig(path)
+
+
+def plot_history(epoch_metrics: dict) -> None:
+    """Plots metrics from an history.
+
+    Args:
+        epoch_metrics (dict): dictionary of metrics.
+    """
+    plt.style.use('ggplot')
+
+    # Create figure
+    fig, (ax_loss, ax_accuracy_f1) = plt.subplots(
+        nrows=1, ncols=2, figsize=(10, 5)
+    )
+
+    # Plot metrics
+    for key, values in epoch_metrics.items():
+        ax = ax_loss if 'loss' in key else ax_accuracy_f1
+        ax.plot(values, label=key.replace('_', ' ').capitalize())
+
+    # Set labels
+    ax_loss.set(title='Loss', xlabel='Epoch', ylabel='Loss')
+    ax_loss.legend()
+    ax_accuracy_f1.set(title='Metrics', xlabel='Epoch', ylabel='Accuracy / F1')
+    ax_accuracy_f1.legend()
+
+    fig.tight_layout()
 
 
 def plot_validation_F1(F1_score: list, threshold: list, optimum: int,
@@ -65,7 +91,6 @@ def plot_validation_F1(F1_score: list, threshold: list, optimum: int,
         path (str, optional): path to save the figure.
     """
     plt.style.use('ggplot')
-    plt.figure()
     plt.plot(threshold, F1_score, label='F1 score')
     plt.plot(threshold[optimum], F1_score[optimum], marker="*", color="red",
              label='optimum')

@@ -10,6 +10,7 @@ from tqdm import tqdm, trange
 from tqdm.notebook import tnrange, tqdm_notebook
 
 from src.metrics import accuracy_score_tensors, f1_score_tensors
+from src.plot_utils import plot_history
 
 
 class Trainer:
@@ -296,6 +297,21 @@ class History:
         """
         with open(path, 'wb') as f:
             pickle.dump(self.epoch_metrics, f)
+
+    def load(self, path: str) -> None:
+        """Loads a history from a pickle file.
+
+        Args:
+            path (str): path of the pickle file.
+        """
+        with open(path, 'rb') as f:
+            self.epoch_metrics = pickle.load(f)
+
+    def plot(self) -> None:
+        """
+        Plots the history.
+        """
+        plot_history(self.epoch_metrics)
 
 
 class EarlyStopping:
