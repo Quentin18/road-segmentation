@@ -18,3 +18,4 @@
 
 - Other articles:
     - [Early Stopping with PyTorch to Restrain your Model from Overfitting](https://medium.com/analytics-vidhya/early-stopping-with-pytorch-to-restrain-your-model-from-overfitting-dce6de4081c5)
+    - [How do I split a custom dataset into training and test datasets?](https://stackoverflow.com/questions/50544730/how-do-i-split-a-custom-dataset-into-training-and-test-datasets)
