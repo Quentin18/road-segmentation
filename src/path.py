@@ -2,6 +2,7 @@
 Paths and archives management.
 """
 import os
+import time
 import zipfile
 
 # Directories paths
@@ -41,3 +42,36 @@ def create_dirs() -> None:
     for path in (MODELS_DIR, OUT_DIR, DEFAULT_PREDICTIONS_DIR):
         if not os.path.exists(path):
             os.mkdir(path)
+
+
+def generate_filename(filename: str) -> str:
+    """Generates a filename using time.
+
+    Args:
+        filename (str): string template. Example: 'model-{}.pt'.
+
+    Returns:
+        str: filename with time.
+    """
+    timestr = time.strftime('%Y%m%d')
+    return filename.format(timestr)
+
+
+def generate_model_filename() -> str:
+    """Generates model filename using time.
+
+    Returns:
+        str: model filename with time.
+    """
+    filename = generate_filename('model-{}.pt')
+    return os.path.join(MODELS_DIR, filename)
+
+
+def generate_log_filename() -> str:
+    """Generates log filename using time.
+
+    Returns:
+        str: log filename with time.
+    """
+    filename = generate_filename('log-{}.pickle')
+    return os.path.join(MODELS_DIR, filename)
