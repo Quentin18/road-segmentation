@@ -1,8 +1,5 @@
 """
 Custom dataset classes for satellite images.
-
-https://pytorch.org/tutorials/recipes/recipes/custom_dataset_transforms_loader.html
-https://stackoverflow.com/questions/50544730/how-do-i-split-a-custom-dataset-into-training-and-test-datasets
 """
 import os
 from typing import Callable, Tuple
@@ -19,7 +16,7 @@ class SatelliteImagesDataset(Dataset):
         img_dir: str,
         gt_dir: str = None,
         image_transform: Callable = None,
-        mask_transform: Callable = None
+        mask_transform: Callable = None,
     ) -> None:
         """Inits a satellite images dataset. It works with both training and
         testing datasets.
