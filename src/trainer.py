@@ -27,7 +27,7 @@ class Trainer:
         log_path: str,
         data_loader: DataLoader,
         valid_data_loader: DataLoader = None,
-        proba_threshold: float = 0.5,
+        proba_threshold: float = 0.25,
         save_period: int = 5,
         early_stopping: bool = True,
         notebook: bool = False,
@@ -45,7 +45,7 @@ class Trainer:
             valid_data_loader (DataLoader, optional): loader of valid data.
             Defaults to None.
             proba_threshold (float, optional): probability threshold to make
-            predictions. Defaults to 0.5.
+            predictions. Defaults to 0.25.
             save_period (int, optional): period to save weights and history.
             Defaults to 5.
             early_stopping (bool, optional): True to enable early stopping
