@@ -307,11 +307,14 @@ class History:
         with open(path, 'rb') as f:
             self.epoch_metrics = pickle.load(f)
 
-    def plot(self) -> None:
+    def plot(self, path: str = None) -> None:
         """
         Plots the history.
+
+        Args:
+            path(str, optional): path to save the figure. Defaults to None.
         """
-        plot_history(self.epoch_metrics)
+        plot_history(self.epoch_metrics, path)
 
 
 class EarlyStopping:
