@@ -2,7 +2,7 @@
 Custom dataset classes for satellite images.
 """
 import os
-from typing import Callable, Tuple
+from typing import Callable, List, Tuple
 
 import numpy as np
 from PIL import Image
@@ -36,17 +36,28 @@ class SatelliteImagesDataset(Dataset):
 
         # Lists of images and masks names
         if self.gt_dir is not None:
-            self.images_names = os.listdir(self.img_dir)
-            self.masks_names = os.listdir(self.gt_dir)
+            self.images_names = self._get_filenames(self.img_dir)
+            self.masks_names = self._get_filenames(self.gt_dir)
         else:
-            self.images_names = [
-                f'{name}/{name}.png' for name in os.listdir(self.img_dir)
-            ]
+            self.images_names = [f'{name}/{name}.png' for name in
+                                 self._get_filenames(self.img_dir)]
             self.masks_names = list()
 
         # Transforms
         self.image_transform = image_transform
         self.mask_transform = mask_transform
+
+    @staticmethod
+    def _get_filenames(dirname: str) -> List[str]:
+        """Returns a sorted list of filenames from a directory.
+
+        Args:
+            dirname (str): path of the directory.
+
+        Returns:
+            List[str]: sorted list of filenames.
+        """
+        return sorted(os.listdir(dirname))
 
     @staticmethod
     def _read_img(img_path: str) -> Image:
