@@ -18,8 +18,8 @@ def accuracy_score_tensors(
     Returns:
         float: accuracy score between 0 and 1.
     """
-    target_flatten = torch.flatten(target)
-    output_flatten = torch.flatten(output)
+    target_flatten = torch.flatten(target).cpu()
+    output_flatten = torch.flatten(output).cpu()
     return accuracy_score(target_flatten, output_flatten, normalize=True)
 
 
@@ -36,6 +36,6 @@ def f1_score_tensors(
     Returns:
         float: f1 score between 0 and 1.
     """
-    target_flatten = torch.flatten(target)
-    output_flatten = torch.flatten(output)
+    target_flatten = torch.flatten(target).cpu()
+    output_flatten = torch.flatten(output).cpu()
     return f1_score(target_flatten, output_flatten)
