@@ -38,6 +38,7 @@ This is the structure of the repository:
 - `figs`: contains the figures
 - `notebooks`: contains the notebooks
 - `scripts`: contains the main scripts
+    - `augment_data.py`: create the augmented dataset
     - `config.py`: helpers functions to configure paths
     - `predict.py`: make predictions using a trained model
     - `run.py`: make predictions for AIcrowd
@@ -46,6 +47,7 @@ This is the structure of the repository:
     - `models`: neural network models
         - `segnet.py`: SegNet implementation
         - `unet.py`: UNet implementation
+    - `data_augmentation.py`: creation of the augmented dataset
     - `datasets.py`: custom dataset class for satellite images
     - `metrics.py`: score and performance functions
     - `path.py`: paths and archives management
