@@ -2,7 +2,6 @@
 Data augmentation functions.
 """
 import os
-# import random
 
 import torch
 from PIL import Image
@@ -38,10 +37,14 @@ def create_augmented_dataset(img_size: int = 280,
     # Define transforms
     size = (img_size, img_size)
     resize = transforms.Resize(size)
+    five_crop = transforms.FiveCrop(size)
     rotate_crop = transforms.Compose([
         transforms.RandomRotation((-180, 180)),
         transforms.CenterCrop(size),
     ])
+
+    # Number of crops by image
+    nb_crop = 5
 
     # Number of rotations by image
     nb_rot = 5
@@ -63,7 +66,7 @@ def create_augmented_dataset(img_size: int = 280,
             image = Image.open(image_path)
             mask = Image.open(mask_path)
 
-            # Resize images
+            # 1. Resize images
             image_resized = resize(image)
             mask_resized = resize(mask)
 
@@ -77,7 +80,26 @@ def create_augmented_dataset(img_size: int = 280,
             image_resized.save(image_resized_path)
             mask_resized.save(mask_resized_path)
 
-            # Rotate and crop images (set seed to have same transform)
+            # 2. Crop the images into four corners and the central crop
+            images_crop = five_crop(image)
+            masks_crop = five_crop(mask)
+
+            # Save cropped images
+            for k in range(nb_crop):
+                image_crop = images_crop[k]
+                mask_crop = masks_crop[k]
+
+                filename = f'satImage_crop{i * nb_crop + k}.png'
+                image_crop_path = os.path.join(
+                    DATA_TRAIN_AUG_IMG_PATH, filename
+                )
+                mask_crop_path = os.path.join(
+                    DATA_TRAIN_AUG_GT_PATH, filename
+                )
+                image_crop.save(image_crop_path)
+                mask_crop.save(mask_crop_path)
+
+            # 3. Rotate and crop images (set seed to have same transform)
             for k in range(nb_rot):
                 seed = i * nb_rot + k
                 torch.manual_seed(seed)
