@@ -113,10 +113,10 @@ ENV/
 # Data
 data/test_set_images/
 data/training/
-data/images_test
-data/augmented
+data/training_augmented/
+
 # Out
 out/
 
 # Model
-models/my_models
+models/my_models/
