@@ -18,6 +18,11 @@ DATA_TRAIN_PATH = os.path.join(DATA_DIR, 'training')
 DATA_TRAIN_GT_PATH = os.path.join(DATA_TRAIN_PATH, 'groundtruth')
 DATA_TRAIN_IMG_PATH = os.path.join(DATA_TRAIN_PATH, 'images')
 
+# Augmented dataset path
+DATA_TRAIN_AUG_PATH = os.path.join(DATA_DIR, 'training_augmented')
+DATA_TRAIN_AUG_GT_PATH = os.path.join(DATA_TRAIN_AUG_PATH, 'groundtruth')
+DATA_TRAIN_AUG_IMG_PATH = os.path.join(DATA_TRAIN_AUG_PATH, 'images')
+
 # Training paths
 DEFAULT_LOSSES_PATH = os.path.join(MODELS_DIR, 'losses.pickle')
 DEFAULT_WEIGHTS_PATH = os.path.join(MODELS_DIR, 'weights.pt')
