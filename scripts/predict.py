@@ -14,7 +14,8 @@ add_root_to_path()
 # Imports from src
 from src.datasets import SatelliteImagesDataset, train_test_split
 from src.models import SegNet, UNet
-from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
+from src.path import (DATA_TRAIN_AUG_GT_PATH, DATA_TRAIN_AUG_IMG_PATH,
+                      DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
                       DEFAULT_PREDICTIONS_DIR, DEFAULT_WEIGHTS_PATH,
                       create_dirs, extract_archives)
 from src.predicter import Predicter
@@ -53,8 +54,8 @@ def main(args: argparse.Namespace) -> None:
 
     # Define dataset
     dataset = SatelliteImagesDataset(
-        img_dir=DATA_TRAIN_IMG_PATH,
-        gt_dir=DATA_TRAIN_GT_PATH,
+        img_dir=DATA_TRAIN_AUG_IMG_PATH,
+        gt_dir=DATA_TRAIN_AUG_GT_PATH,
         image_transform=image_transform,
         mask_transform=mask_transform,
     )
@@ -102,6 +103,7 @@ def main(args: argparse.Namespace) -> None:
     model.to(device)
 
     # Load model
+    print('Load model:', args.model_path)
     state_dict = torch.load(args.model_path, map_location=device)
     model.load_state_dict(state_dict)
 
