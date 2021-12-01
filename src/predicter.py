@@ -8,6 +8,7 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 from tqdm import tqdm
+from tqdm.notebook import tqdm_notebook
 
 from src.metrics import accuracy_score_tensors, f1_score_tensors
 from src.submission import masks_to_submission
@@ -23,6 +24,7 @@ class Predicter:
         device: str,
         predictions_path: str,
         data_loader: DataLoader,
+        notebook: bool = False,
     ) -> None:
         """Inits the predicter.
 
@@ -31,12 +33,17 @@ class Predicter:
             device (str): device (cpu or cuda).
             predictions_path (str): path to the directory of predictions.
             data_loader (DataLoader): data loader to predict.
+            notebook (bool, optional): True if predicting is done in a notebook
+            (to display progress bar properly). Defaults to False.
         """
         self.model = model
         self.device = device
         self.predictions_path = predictions_path
         self.data_loader = data_loader
         self.predictions_filenames = list()
+
+        # Set progress bar functions
+        self.tqdm = tqdm_notebook if notebook else tqdm
 
     def _predict_labels(
         self,
@@ -73,7 +80,7 @@ class Predicter:
         # Switch off autograd
         with torch.no_grad():
             # Loop over the dataset
-            with tqdm(self.data_loader, unit='batch') as t:
+            with self.tqdm(self.data_loader, unit='batch') as t:
                 for i, (data, target) in enumerate(t):
                     filename = f'prediction_{i + 1:03d}.png'
                     t.set_description(desc=filename)
