@@ -38,4 +38,4 @@ def f1_score_tensors(
     """
     target_flatten = torch.flatten(target).cpu()
     output_flatten = torch.flatten(output).cpu()
-    return f1_score(target_flatten, output_flatten)
+    return f1_score(target_flatten, output_flatten, zero_division=1)
