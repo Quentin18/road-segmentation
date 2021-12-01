@@ -44,7 +44,8 @@ def extract_archives() -> None:
 
 def create_dirs() -> None:
     """Creates directories if needed."""
-    for path in (MODELS_DIR, OUT_DIR, DEFAULT_PREDICTIONS_DIR):
+    for path in (MODELS_DIR, OUT_DIR, DEFAULT_PREDICTIONS_DIR,
+                 DEFAULT_SUBMISSION_MASK_DIR):
         if not os.path.exists(path):
             os.mkdir(path)
 
