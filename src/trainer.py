@@ -234,16 +234,20 @@ class Trainer:
 
         postfix = dict()
 
+        # Init best f1
+        best_f1 = 0.0
+
         # Loop over epochs
         with self.trange(1, epochs + 1, desc='Training', unit='epoch') as t:
             for epoch in t:
                 # Train
-                loss_metrics = self._train_epoch(epoch)
-                self.history.update(**loss_metrics)
-                postfix.update(loss_metrics)
+                train_metrics = self._train_epoch(epoch)
+                self.history.update(**train_metrics)
+                postfix.update(train_metrics)
+                f1 = train_metrics['train_f1']
 
                 # Early stopping check
-                train_loss = loss_metrics['train_loss']
+                train_loss = train_metrics['train_loss']
                 if self.early_stopping and self.early_stopping(train_loss):
                     print(f'EarlyStopping: Stop training at epoch {epoch}.')
                     break
@@ -253,15 +257,18 @@ class Trainer:
                     valid_metrics = self._valid_epoch(epoch)
                     self.history.update(**valid_metrics)
                     postfix.update(valid_metrics)
+                    f1 = valid_metrics['valid_f1']
+
+                # Save model if better f1 score
+                # (valid f1 if validation else train f1)
+                if f1 > best_f1:
+                    best_f1 = f1
+                    postfix['best_f1'] = best_f1
+                    self._save_model()
 
                 # Update progress bar
                 t.set_postfix(postfix)
 
-                # Save model
-                if epoch % self.save_period == 0:
-                    self._save_model()
-
-        self._save_model()
         t_end = time.time()
         print(f'End training. Time: {t_end - t_start:.3f}s.')
 
