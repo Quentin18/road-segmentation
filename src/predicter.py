@@ -124,4 +124,4 @@ class Predicter:
         Args:
             submission_filename (str): submission csv file path.
         """
-        masks_to_submission(submission_filename, self.predictions_files_paths)
+        masks_to_submission(submission_filename, self.predictions_filenames)

@@ -111,7 +111,7 @@ def plot_images(
     image: Union[Image, Tensor],
     mask: Union[Image, Tensor],
     pred: Union[Image, Tensor] = None,
-    show: bool = True,
+    path: str = None,
 ) -> None:
     """Plots an image, its mask and optionaly a predicted mask.
 
@@ -120,7 +120,7 @@ def plot_images(
         mask (Union[Image, Tensor]): mask as PIL image or tensor.
         pred (Union[Image, Tensor], optional): predicted mask as PIL image or
         tensor. Defaults to None.
-        show (bool): call show.
+        path(str, optional): path to save the figure. Defaults to None.
     """
     # Convert image, mask and pred to PIL images
     transform = transforms.ToPILImage()
@@ -149,5 +149,7 @@ def plot_images(
 
     fig.tight_layout()
 
-    if show:
-        plt.show()
+    # Save figure
+    if path is not None:
+        plt.savefig(path)
+        plt.close(fig)

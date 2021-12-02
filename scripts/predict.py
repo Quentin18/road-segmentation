@@ -2,8 +2,10 @@
 Predicting script.
 """
 import argparse
+import os
 
 import torch
+from PIL import Image
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
@@ -12,12 +14,13 @@ from config import add_root_to_path
 add_root_to_path()
 
 # Imports from src
+from src.data_augmentation import AUG_IMG_SIZE
 from src.datasets import SatelliteImagesDataset, train_test_split
 from src.models import SegNet, UNet
 from src.path import (DATA_TRAIN_AUG_GT_PATH, DATA_TRAIN_AUG_IMG_PATH,
-                      DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH,
                       DEFAULT_PREDICTIONS_DIR, DEFAULT_WEIGHTS_PATH,
                       create_dirs, extract_archives)
+from src.plot_utils import plot_images
 from src.predicter import Predicter
 
 
@@ -120,6 +123,21 @@ def main(args: argparse.Namespace) -> None:
     print('Accuracy:', accuracy)
     print('F1 score:', f1)
 
+    # Plot image-mask-prediction
+    # TODO to improve
+    print('Save img-mask-pred')
+    if args.split_ratio > 0:
+        for (image, mask), pred_path in zip(
+            test_set, predicter.predictions_filenames
+        ):
+            filename = os.path.basename(pred_path).replace(
+                'prediction', 'img_mask_pred'
+            )
+            pred = Image.open(pred_path)
+            path = os.path.join(os.path.dirname(pred_path), filename)
+            plot_images(image, mask, pred, path=path)
+    print('End img-mask-pred')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -130,12 +148,12 @@ if __name__ == '__main__':
         '--batch-size',
         type=int,
         default=1,
-        help='input batch size for training',
+        help='input batch size for predicting',
     )
     parser.add_argument(
         '--image-size',
         type=int,
-        default=400,
+        default=AUG_IMG_SIZE,
         help='target input image size',
     )
     parser.add_argument(
@@ -160,7 +178,7 @@ if __name__ == '__main__':
         '--split-ratio',
         type=float,
         default=0.2,
-        help='train test split ratio. 0 to train the whole dataset',
+        help='train test split ratio. 0 to predict the whole dataset',
     )
     parser.add_argument(
         '--workers',
