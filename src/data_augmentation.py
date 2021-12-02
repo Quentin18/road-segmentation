@@ -2,6 +2,7 @@
 Data augmentation functions.
 """
 import os
+import shutil
 
 import torch
 from PIL import Image
@@ -12,19 +13,28 @@ from src.path import (DATA_TRAIN_AUG_GT_PATH, DATA_TRAIN_AUG_IMG_PATH,
                       DATA_TRAIN_AUG_PATH, DATA_TRAIN_GT_PATH,
                       DATA_TRAIN_IMG_PATH)
 
+# Size of the new images
+AUG_IMG_SIZE = 256
 
-def create_augmented_dataset(img_size: int = 280,
-                             replace: bool = False) -> None:
+
+def create_augmented_dataset(replace: bool = False) -> None:
     """Creates the augmented dataset.
 
+    It contains 1100 images of size 256x256:
+    - Resized images from train data (100)
+    - Cropped images into four corners and the central crop (5x100)
+    - Rotated and cropped images (5x100)
+
     Args:
-        img_size (int, optional): size of the output images. Defaults to 280.
         replace (bool, optional): True to replace images if already exist.
         Defaults to False.
     """
     # Ignore if dataset already created
     if os.path.exists(DATA_TRAIN_AUG_PATH) and not replace:
         return
+
+    # Reset directory
+    shutil.rmtree(DATA_TRAIN_AUG_PATH, ignore_errors=True)
 
     # Creates directories
     for dirname in (DATA_TRAIN_AUG_GT_PATH, DATA_TRAIN_AUG_IMG_PATH):
@@ -35,7 +45,7 @@ def create_augmented_dataset(img_size: int = 280,
     masks_names = sorted(os.listdir(DATA_TRAIN_GT_PATH))
 
     # Define transforms
-    size = (img_size, img_size)
+    size = (AUG_IMG_SIZE, AUG_IMG_SIZE)
     resize = transforms.Resize(size)
     five_crop = transforms.FiveCrop(size)
     rotate_crop = transforms.Compose([
