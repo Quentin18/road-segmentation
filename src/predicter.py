@@ -5,8 +5,8 @@ import os
 from typing import Tuple
 
 import torch
-from torch.utils.data import DataLoader
-from torchvision.utils import save_image
+from PIL import Image
+from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 from tqdm.notebook import tqdm_notebook
 
@@ -36,14 +36,36 @@ class Predicter:
             notebook (bool, optional): True if predicting is done in a notebook
             (to display progress bar properly). Defaults to False.
         """
+        assert data_loader.batch_size == 1
+
         self.model = model
         self.device = device
         self.predictions_path = predictions_path
         self.data_loader = data_loader
         self.predictions_filenames = list()
 
+        # Create predictions directory
+        os.makedirs(self.predictions_path, exist_ok=True)
+
         # Set progress bar functions
         self.tqdm = tqdm_notebook if notebook else tqdm
+
+    def _get_pred_filename(self, index: int) -> str:
+        """Returns the filename of the prediction from the index of the image
+        in the dataset.
+
+        Args:
+            index (int): index of the image in the dataset.
+
+        Returns:
+            str: filename of the prediction.
+        """
+        if isinstance(self.data_loader.dataset, Subset):
+            dataset = self.data_loader.dataset.dataset
+            index = self.data_loader.dataset.indices[index]
+        else:
+            dataset = self.data_loader.dataset
+        return dataset.get_img_filename(index)
 
     def _predict_labels(
         self,
@@ -60,6 +82,17 @@ class Predicter:
             torch.Tensor: tensor of 0 and 1.
         """
         return (output > proba_threshold).type(torch.uint8)
+
+    def _save_mask(self, output: torch.Tensor, filename: str) -> None:
+        """Saves the mask as image.
+
+        Args:
+            output (torch.Tensor): tensor output.
+            filename (str): filename.
+        """
+        array = torch.squeeze(output * 255).cpu().numpy()
+        img = Image.fromarray(array)
+        img.save(filename)
 
     def predict(self, proba_threshold: float = 0.25) -> Tuple[float, float]:
         """Predicts the masks of images.
@@ -82,7 +115,7 @@ class Predicter:
             # Loop over the dataset
             with self.tqdm(self.data_loader, unit='batch') as t:
                 for i, (data, target) in enumerate(t):
-                    filename = f'prediction_{i + 1:03d}.png'
+                    filename = self._get_pred_filename(i)
                     t.set_description(desc=filename)
 
                     # Send the input to the device
@@ -106,9 +139,8 @@ class Predicter:
                         f1_scores.append(f1)
 
                     # Save mask
-                    output = (output * 255).type(torch.float32)
                     output_path = os.path.join(self.predictions_path, filename)
-                    save_image(output, output_path)
+                    self._save_mask(output, output_path)
                     self.predictions_filenames.append(output_path)
 
         # Compute average metrics
