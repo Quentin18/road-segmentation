@@ -4,9 +4,9 @@ Data augmentation functions.
 import os
 import shutil
 
-import torch
+import torchvision.transforms.functional as TF
 from PIL import Image
-from torchvision import transforms
+from torchvision.transforms import FiveCrop, Resize
 from tqdm import trange
 
 from src.path import (DATA_TRAIN_AUG_GT_PATH, DATA_TRAIN_AUG_IMG_PATH,
@@ -16,14 +16,30 @@ from src.path import (DATA_TRAIN_AUG_GT_PATH, DATA_TRAIN_AUG_IMG_PATH,
 # Size of the new images
 AUG_IMG_SIZE = 256
 
+# Angles for rotations
+ANGLES = [-90, -45, 45, 90]
+
+
+class MultipleRotationCrop:
+    """Rotate the image by the given angles and center crop."""
+    def __init__(self, angles: list, size: int):
+        self.angles = angles
+        self.size = size
+
+    def __call__(self, img):
+        return [
+            TF.center_crop(TF.rotate(img, angle), self.size)
+            for angle in self.angles
+        ]
+
 
 def create_augmented_dataset(replace: bool = False) -> None:
     """Creates the augmented dataset.
 
-    It contains 1100 images of size 256x256:
+    It contains 1000 images of size 256x256:
     - Resized images from train data (100)
     - Cropped images into four corners and the central crop (5x100)
-    - Rotated and cropped images (5x100)
+    - Rotated and cropped images (4x100)
 
     Args:
         replace (bool, optional): True to replace images if already exist.
@@ -46,18 +62,15 @@ def create_augmented_dataset(replace: bool = False) -> None:
 
     # Define transforms
     size = (AUG_IMG_SIZE, AUG_IMG_SIZE)
-    resize = transforms.Resize(size)
-    five_crop = transforms.FiveCrop(size)
-    rotate_crop = transforms.Compose([
-        transforms.RandomRotation((-180, 180)),
-        transforms.CenterCrop(size),
-    ])
+    resize = Resize(size)
+    five_crop = FiveCrop(size)
+    multiple_rotate_crop = MultipleRotationCrop(ANGLES, size)
 
     # Number of crops by image
     nb_crop = 5
 
     # Number of rotations by image
-    nb_rot = 5
+    nb_rot = len(ANGLES)
 
     # Create augmented dataset
     with trange(len(images_names), unit='image') as t:
@@ -109,16 +122,16 @@ def create_augmented_dataset(replace: bool = False) -> None:
                 image_crop.save(image_crop_path)
                 mask_crop.save(mask_crop_path)
 
-            # 3. Rotate and crop images (set seed to have same transform)
-            for k in range(nb_rot):
-                seed = i * nb_rot + k
-                torch.manual_seed(seed)
-                image_rot = rotate_crop(image)
-                torch.manual_seed(seed)
-                mask_rot = rotate_crop(mask)
+            # 3. Rotate and crop images
+            images_rot = multiple_rotate_crop(image)
+            masks_rot = multiple_rotate_crop(mask)
 
-                # Save rotated images
-                filename = f'satImage_rot{seed}.png'
+            # Save rotated images
+            for k in range(nb_rot):
+                image_rot = images_rot[k]
+                mask_rot = masks_rot[k]
+
+                filename = f'satImage_rot{i * nb_rot + k}.png'
                 image_rot_path = os.path.join(
                     DATA_TRAIN_AUG_IMG_PATH, filename
                 )
