@@ -12,7 +12,7 @@ class UNet(nn.Module):
     UNet neural network.
     """
     def __init__(self, in_channels=3, out_channels=1, init_features=32):
-        super(UNet, self).__init__()
+        super().__init__()
 
         features = init_features
         self.encoder1 = UNet._block(in_channels, features, name="enc1")
