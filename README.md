@@ -86,7 +86,6 @@ This is the structure of the repository:
     - `train.py`: train the model
 - `src`: source code
     - `models`: neural network models
-        - `dncnn.py`: DnCNN implementation
         - `segnet.py`: SegNet implementation
         - `unet.py`: UNet implementation
     - `data_augmentation.py`: creation of the augmented dataset

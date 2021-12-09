@@ -3,12 +3,10 @@
 - Models articles:
     - [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/pdf/1505.04597.pdf)
     - [Understanding Semantic Segmentation with UNET](https://towardsdatascience.com/understanding-semantic-segmentation-with-unet-6be4f42d4b47)
-    - [Beyond a Gaussian Denoiser: Residual Learning of Deep CNN for Image Denoising](https://arxiv.org/pdf/1608.03981.pdf)
 
 - Models implementations:
     - [U-Net for brain segmentation](https://github.com/mateuszbuda/brain-segmentation-pytorch)
     - [U-Net: Training Image Segmentation Models in PyTorch](https://www.pyimagesearch.com/2021/11/08/u-net-training-image-segmentation-models-in-pytorch/)
-    - [DnCNN in PyTorch](https://github.com/SaoYan/DnCNN-PyTorch)
 
 - Pytorch documentation:
     - [Training a classifier](https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html)

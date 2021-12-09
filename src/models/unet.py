@@ -11,7 +11,15 @@ class UNet(nn.Module):
     """
     UNet neural network.
     """
-    def __init__(self, in_channels=3, out_channels=1, init_features=32):
+    def __init__(
+        self,
+        in_channels: int = 3,
+        out_channels: int = 1,
+        init_features: int = 32,
+        dropout: bool = False,
+        prob1: float = 0.25,
+        prob: float = 0.5,
+    ):
         super().__init__()
 
         features = init_features
@@ -59,25 +67,47 @@ class UNet(nn.Module):
             in_channels=features, out_channels=out_channels, kernel_size=1
         )
 
+        # Dropout
+        self.dropout = dropout
+        self.drop1 = nn.Dropout(p=prob1)
+        self.drop = nn.Dropout(p=prob)
+
     def forward(self, x):
         enc1 = self.encoder1(x)
-        enc2 = self.encoder2(self.pool1(enc1))
-        enc3 = self.encoder3(self.pool2(enc2))
-        enc4 = self.encoder4(self.pool3(enc3))
+        enc1 = self.pool1(enc1)
+        if self.dropout:
+            enc1 = self.drop1(enc1)
+        enc2 = self.encoder2(enc1)
+        enc2 = self.pool2(enc2)
+        if self.dropout:
+            enc2 = self.drop(enc2)
+        enc3 = self.encoder3(enc2)
+        enc3 = self.pool3(enc3)
+        if self.dropout:
+            enc3 = self.drop(enc3)
+        enc4 = self.encoder4(enc3)
 
         bottleneck = self.bottleneck(self.pool4(enc4))
 
         dec4 = self.upconv4(bottleneck)
         dec4 = torch.cat((dec4, enc4), dim=1)
+        if self.dropout:
+            dec4 = self.drop(dec4)
         dec4 = self.decoder4(dec4)
         dec3 = self.upconv3(dec4)
         dec3 = torch.cat((dec3, enc3), dim=1)
+        if self.dropout:
+            dec3 = self.drop(dec3)
         dec3 = self.decoder3(dec3)
         dec2 = self.upconv2(dec3)
         dec2 = torch.cat((dec2, enc2), dim=1)
+        if self.dropout:
+            dec2 = self.drop(dec2)
         dec2 = self.decoder2(dec2)
         dec1 = self.upconv1(dec2)
         dec1 = torch.cat((dec1, enc1), dim=1)
+        if self.dropout:
+            dec1 = self.drop(dec1)
         dec1 = self.decoder1(dec1)
         return torch.sigmoid(self.conv(dec1))
 
