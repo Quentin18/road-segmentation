@@ -1,5 +1,10 @@
 """
 Predicting script.
+
+Usage:
+python3 predict.py
+
+To see the different options, run `python3 predict.py --help`.
 """
 import argparse
 import os

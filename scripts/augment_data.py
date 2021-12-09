@@ -1,5 +1,11 @@
 """
-Script to create the augmented dataset.
+Script to create the augmented training dataset.
+
+Usage:
+python3 augment_data.py
+
+The images created will be in the `data/training_augmented` directory. If this
+directory already exists, it will overwrite the images.
 """
 # Add root directory to path
 from config import add_root_to_path

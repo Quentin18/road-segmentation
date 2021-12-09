@@ -1,5 +1,10 @@
 """
 Plotting metrics script.
+
+Usage:
+python3 plot_metrics.py --file FILE
+
+`FILE` must be a `pickle` file.
 """
 import argparse
 
@@ -10,7 +15,6 @@ from config import add_root_to_path
 add_root_to_path()
 
 # Imports from src
-from src.path import DEFAULT_LOSSES_PATH
 from src.trainer import History
 
 
@@ -21,20 +25,27 @@ def main(args: argparse.Namespace) -> None:
         args (argparse.Namespace): namespace of arguments.
     """
     history = History()
-    history.load(args.file)
-    history.plot()
+    history.load(path=args.file)
+    history.plot(path=args.save_path)
     plt.show()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Plotting metrics from training"
+        description='Plotting metrics from training',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--file",
+        '--file',
         type=str,
-        default=DEFAULT_LOSSES_PATH,
-        help="pickle file",
+        help='pickle file',
+        required=True,
+    )
+    parser.add_argument(
+        '--save-path',
+        type=str,
+        default=None,
+        help='path to save the figure',
     )
     args = parser.parse_args()
     main(args)

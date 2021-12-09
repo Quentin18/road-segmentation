@@ -1,5 +1,10 @@
 """
 Traininig script.
+
+Usage:
+python3 train.py
+
+To see the different options, run `python3 train.py --help`.
 """
 import argparse
 
