@@ -74,18 +74,18 @@ class UNet(nn.Module):
 
     def forward(self, x):
         enc1 = self.encoder1(x)
-        enc1 = self.pool1(enc1)
+        pool1 = self.pool1(enc1)
         if self.dropout:
-            enc1 = self.drop1(enc1)
-        enc2 = self.encoder2(enc1)
-        enc2 = self.pool2(enc2)
+            pool1 = self.drop1(pool1)
+        enc2 = self.encoder2(pool1)
+        pool2 = self.pool2(enc2)
         if self.dropout:
-            enc2 = self.drop(enc2)
-        enc3 = self.encoder3(enc2)
-        enc3 = self.pool3(enc3)
+            pool2 = self.drop(pool2)
+        enc3 = self.encoder3(pool2)
+        pool3 = self.pool3(enc3)
         if self.dropout:
-            enc3 = self.drop(enc3)
-        enc4 = self.encoder4(enc3)
+            pool3 = self.drop(pool3)
+        enc4 = self.encoder4(pool3)
 
         bottleneck = self.bottleneck(self.pool4(enc4))
 
