@@ -134,9 +134,10 @@ def train_test_split(
     Returns:
         Tuple[Dataset, Dataset]: train and test datasets.
     """
-    # Set seed
+    # Define generator
+    generator = torch.Generator()
     if seed is not None:
-        torch.manual_seed(seed)
+        generator.manual_seed(seed)
 
     # Define lengths of subsets
     train_ratio = 1 - test_ratio
@@ -145,6 +146,6 @@ def train_test_split(
     lengths = [train_size, test_size]
 
     # Split
-    train_dataset, test_dataset = random_split(dataset, lengths)
+    train_dataset, test_dataset = random_split(dataset, lengths, generator)
 
     return train_dataset, test_dataset
