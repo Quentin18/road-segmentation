@@ -134,7 +134,7 @@ def patch_to_label(patch: np.ndarray,
     Returns:
         int: 0 or 1.
     """
-    return int(np.mean(patch) > foreground_threshold)
+    return int(np.mean(patch) > (foreground_threshold * 255))
 
 
 def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
@@ -154,7 +154,8 @@ def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
     for j in range(0, im.shape[1], patch_size):
         for i in range(0, im.shape[0], patch_size):
             patch = im[i:i + patch_size, j:j + patch_size]
-            label = patch_to_label(patch, foreground_threshold)
+            label = patch_to_label(patch,
+                                   foreground_threshold=foreground_threshold)
             yield f'{img_number:03d}_{j}_{i},{label}'
 
 
@@ -174,4 +175,4 @@ def masks_to_submission(submission_filename: str,
         f.write('id,prediction\n')
         for fn in tqdm(masks_filenames, desc='Create submission', unit='mask'):
             f.writelines(f'{s}\n' for s in mask_to_submission_strings(
-                fn, patch_size, foreground_threshold))
+                fn, patch_size, foreground_threshold=foreground_threshold))
