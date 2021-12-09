@@ -5,6 +5,7 @@ import os
 from typing import Callable, List, Tuple
 
 import numpy as np
+import torch
 from PIL import Image
 from torch.utils.data import Dataset, random_split
 
@@ -106,21 +107,44 @@ class SatelliteImagesDataset(Dataset):
 
         return image, mask
 
+    def get_img_filename(self, index: int) -> str:
+        """Returns the filename of an image from the index.
 
-def train_test_split(dataset: Dataset,
-                     test_ratio: float) -> Tuple[Dataset, Dataset]:
+        Args:
+            index (int): index of the image in the list.
+
+        Returns:
+            str: filename corresponding to the index.
+        """
+        return self.images_names[index]
+
+
+def train_test_split(
+    dataset: Dataset,
+    test_ratio: float,
+    seed: int = None,
+) -> Tuple[Dataset, Dataset]:
     """Splits a dataset into random train and test subsets.
 
     Args:
         dataset (Dataset): dataset.
         test_ratio (float): test proportion (between 0 and 1).
+        seed (int, optional): seed. Defaults to None.
 
     Returns:
         Tuple[Dataset, Dataset]: train and test datasets.
     """
+    # Set seed
+    if seed is not None:
+        torch.manual_seed(seed)
+
+    # Define lengths of subsets
     train_ratio = 1 - test_ratio
     train_size = int(train_ratio * len(dataset))
     test_size = len(dataset) - train_size
     lengths = [train_size, test_size]
+
+    # Split
     train_dataset, test_dataset = random_split(dataset, lengths)
+
     return train_dataset, test_dataset
