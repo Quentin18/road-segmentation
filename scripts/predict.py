@@ -14,7 +14,6 @@ from config import add_root_to_path
 add_root_to_path()
 
 # Imports from src
-from src.data_augmentation import AUG_IMG_SIZE
 from src.datasets import SatelliteImagesDataset, train_test_split
 from src.models import SegNet, UNet
 from src.path import (DATA_TRAIN_AUG_GT_PATH, DATA_TRAIN_AUG_IMG_PATH,
@@ -46,12 +45,9 @@ def main(args: argparse.Namespace) -> None:
 
     # Define transforms
     image_transform = transforms.Compose([
-        transforms.Resize((args.image_size, args.image_size)),
         transforms.ToTensor(),
-        # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     mask_transform = transforms.Compose([
-        transforms.Resize((args.image_size, args.image_size)),
         transforms.ToTensor(),
     ])
 
@@ -70,29 +66,22 @@ def main(args: argparse.Namespace) -> None:
 
     if args.split_ratio > 0:
         # Split train test
-        train_set, test_set = train_test_split(
+        _, test_set = train_test_split(
             dataset=dataset,
             test_ratio=args.split_ratio,
-        )
-        print('Train size:', len(train_set))
-        print('Test size:', len(test_set))
-
-        # Define loader
-        test_loader = DataLoader(
-            dataset=test_set,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=args.workers,
-            pin_memory=pin_memory,
+            seed=args.seed,
         )
     else:
-        test_loader = DataLoader(
-            dataset=dataset,
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=args.workers,
-            pin_memory=pin_memory,
-        )
+        test_set = dataset
+
+    print('Test size:', len(test_set))
+
+    # Define loader
+    test_loader = DataLoader(
+        dataset=test_set,
+        num_workers=args.workers,
+        pin_memory=pin_memory,
+    )
 
     # Define model
     if args.model == 'unet':
@@ -143,18 +132,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Predicting for road segmentation',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument(
-        '--batch-size',
-        type=int,
-        default=1,
-        help='input batch size for predicting',
-    )
-    parser.add_argument(
-        '--image-size',
-        type=int,
-        default=AUG_IMG_SIZE,
-        help='target input image size',
     )
     parser.add_argument(
         '--model',
