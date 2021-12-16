@@ -17,8 +17,7 @@ class UNet(nn.Module):
         out_channels: int = 1,
         init_features: int = 32,
         dropout: bool = False,
-        prob1: float = 0.25,
-        prob: float = 0.5,
+        prob: float = 0.2,
     ):
         super().__init__()
 
@@ -69,14 +68,14 @@ class UNet(nn.Module):
 
         # Dropout
         self.dropout = dropout
-        self.drop1 = nn.Dropout(p=prob1)
-        self.drop = nn.Dropout(p=prob)
+        if self.dropout:
+            self.drop = nn.Dropout(p=prob)
 
     def forward(self, x):
         enc1 = self.encoder1(x)
         pool1 = self.pool1(enc1)
         if self.dropout:
-            pool1 = self.drop1(pool1)
+            pool1 = self.drop(pool1)
         enc2 = self.encoder2(pool1)
         pool2 = self.pool2(enc2)
         if self.dropout:
