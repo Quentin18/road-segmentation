@@ -44,9 +44,7 @@ def main(args: argparse.Namespace) -> None:
 
     # Define transforms
     image_transform = transforms.Compose([
-        transforms.Resize((args.image_size, args.image_size)),
         transforms.ToTensor(),
-        # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
     # Define dataset
@@ -61,8 +59,7 @@ def main(args: argparse.Namespace) -> None:
 
     test_loader = DataLoader(
         dataset=train_set,
-        batch_size=args.batch_size,
-        shuffle=False,
+        batch_size=1,
         num_workers=args.workers,
         pin_memory=pin_memory,
     )
@@ -101,18 +98,6 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        '--batch-size',
-        type=int,
-        default=1,
-        help='input batch size',
-    )
-    parser.add_argument(
-        '--image-size',
-        type=int,
-        default=608,
-        help='target input image size',
-    )
-    parser.add_argument(
         '--model-path',
         type=str,
         default=DEFAULT_WEIGHTS_PATH,
@@ -136,7 +121,6 @@ if __name__ == '__main__':
         default=0.2,
         help='threshold for submission',
     )
-
     parser.add_argument(
         '--workers',
         type=int,
