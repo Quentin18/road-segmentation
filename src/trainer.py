@@ -30,6 +30,7 @@ class Trainer:
         proba_threshold: float = 0.25,
         save_period: int = 5,
         early_stopping: bool = True,
+        lr_scheduler: object = None,
         notebook: bool = False,
     ) -> None:
         """Inits the trainer.
@@ -50,6 +51,8 @@ class Trainer:
             Defaults to 5.
             early_stopping (bool, optional): True to enable early stopping
             callback. Defaults to True.
+            lr_scheduler (object, optional): learning rate scheduler.
+            Defaults to None.
             notebook (bool, optional): True if training is done in a notebook
             (to display progress bar properly). Defaults to False.
         """
@@ -81,6 +84,9 @@ class Trainer:
         # Set progress bar functions
         self.tqdm = tqdm_notebook if notebook else tqdm
         self.trange = tnrange if notebook else trange
+
+        # Learning rate scheduler
+        self.lr_scheduler = lr_scheduler
 
     def _predict_labels(self, output: torch.Tensor) -> torch.Tensor:
         """Predicts the labels for an output.
@@ -265,6 +271,10 @@ class Trainer:
                     best_f1 = f1
                     postfix['best_f1'] = best_f1
                     self._save_model()
+
+                # Adjust learning rate
+                if self.lr_scheduler is not None:
+                    self.lr_scheduler.step(train_loss)
 
                 # Update progress bar
                 t.set_postfix(postfix)
