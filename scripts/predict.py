@@ -7,10 +7,8 @@ python3 predict.py
 To see the different options, run `python3 predict.py --help`.
 """
 import argparse
-import os
 
 import torch
-from PIL import Image
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
@@ -24,7 +22,6 @@ from src.models import SegNet, UNet
 from src.path import (DATA_TRAIN_AUG_GT_PATH, DATA_TRAIN_AUG_IMG_PATH,
                       DEFAULT_PREDICTIONS_DIR, DEFAULT_WEIGHTS_PATH,
                       create_dirs, extract_archives)
-from src.plot_utils import plot_images
 from src.predicter import Predicter
 
 
@@ -116,21 +113,6 @@ def main(args: argparse.Namespace) -> None:
     accuracy, f1 = predicter.predict(proba_threshold=0.25)
     print('Accuracy:', accuracy)
     print('F1 score:', f1)
-
-    # Plot image-mask-prediction
-    # TODO to improve
-    print('Save img-mask-pred')
-    if args.split_ratio > 0:
-        for (image, mask), pred_path in zip(
-            test_set, predicter.predictions_filenames
-        ):
-            filename = os.path.basename(pred_path).replace(
-                'prediction', 'img_mask_pred'
-            )
-            pred = Image.open(pred_path)
-            path = os.path.join(os.path.dirname(pred_path), filename)
-            plot_images(image, mask, pred, path=path)
-    print('End img-mask-pred')
 
 
 if __name__ == '__main__':

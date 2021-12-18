@@ -12,6 +12,7 @@ from tqdm import tqdm
 from tqdm.notebook import tqdm_notebook
 
 from src.metrics import accuracy_score_tensors, f1_score_tensors
+from src.plot_utils import plot_images
 from src.submission import masks_to_submission
 
 
@@ -46,14 +47,23 @@ class Predicter:
         self.nb_imgs = len(data_loader)
         self.predictions_filenames = list()
 
-        # Reset predictions directory
-        shutil.rmtree(self.predictions_path, ignore_errors=True)
-
-        # Create predictions directory
-        os.makedirs(self.predictions_path, exist_ok=True)
+        # Extra directory containing comparisons with images and groundtruth
+        self.extra_path = os.path.join(self.predictions_path, 'extra')
 
         # Set progress bar functions
         self.tqdm = tqdm_notebook if notebook else tqdm
+
+        self._init_directories()
+
+    def _init_directories(self) -> None:
+        """Inits the output directories.
+        """
+        # Reset predictions directory
+        shutil.rmtree(self.predictions_path, ignore_errors=True)
+
+        # Create predictions and extra directories
+        for path in (self.predictions_path, self.extra_path):
+            os.makedirs(path, exist_ok=True)
 
     def _get_pred_filename(self, index: int) -> str:
         """Returns the filename of the prediction.
@@ -84,7 +94,7 @@ class Predicter:
         """
         return (output > proba_threshold).type(torch.uint8)
 
-    def _save_mask(self, output: torch.Tensor, filename: str) -> None:
+    def _save_mask(cls, output: torch.Tensor, filename: str) -> None:
         """Saves the mask as image.
 
         Args:
@@ -94,6 +104,29 @@ class Predicter:
         array = torch.squeeze(output * 255).cpu().numpy()
         img = Image.fromarray(array)
         img.save(filename)
+
+    def _save_comparison(
+        self,
+        index: int,
+        data: torch.Tensor,
+        target: torch.Tensor,
+        output: torch.Tensor,
+    ) -> None:
+        """Saves the comparison image/grountruth/prediction.
+
+        Args:
+            index (int): index.
+            data (torch.Tensor): image tensor.
+            target (torch.Tensor): groundtruth image tensor.
+            output (torch.Tensor): prediction tensor.
+        """
+        filename = os.path.join(
+            self.extra_path, f'comparison_{index + 1:04d}.png'
+        )
+        data = torch.squeeze(data)
+        target = torch.squeeze(target)
+        output = torch.squeeze(output)
+        plot_images(data, target, output, filename)
 
     def predict(self, proba_threshold: float = 0.25) -> Tuple[float, float]:
         """Predicts the masks of images.
@@ -130,7 +163,7 @@ class Predicter:
                     # Get labels
                     output = self._predict_labels(output, proba_threshold)
 
-                    # Compute metrics
+                    # Compute metrics and save comparisons
                     if target.dim() != 1:
                         target = self._predict_labels(target, proba_threshold)
                         accuracy = accuracy_score_tensors(target, output)
@@ -138,6 +171,7 @@ class Predicter:
                         t.set_postfix(acuracy=accuracy, f1=f1)
                         accuracy_scores.append(accuracy)
                         f1_scores.append(f1)
+                        self._save_comparison(i, data, target, output)
 
                     # Save mask
                     output_path = os.path.join(self.predictions_path, filename)
