@@ -28,7 +28,6 @@ class Trainer:
         data_loader: DataLoader,
         valid_data_loader: DataLoader = None,
         proba_threshold: float = 0.25,
-        save_period: int = 5,
         early_stopping: bool = True,
         lr_scheduler: object = None,
         notebook: bool = False,
@@ -47,8 +46,6 @@ class Trainer:
             Defaults to None.
             proba_threshold (float, optional): probability threshold to make
             predictions. Defaults to 0.25.
-            save_period (int, optional): period to save weights and history.
-            Defaults to 5.
             early_stopping (bool, optional): True to enable early stopping
             callback. Defaults to True.
             lr_scheduler (object, optional): learning rate scheduler.
@@ -65,7 +62,6 @@ class Trainer:
         self.data_loader = data_loader
         self.valid_data_loader = valid_data_loader
         self.proba_threshold = proba_threshold
-        self.save_period = save_period
         self.do_validation = self.valid_data_loader is not None
 
         # Calculate steps per epoch for train and valid set
@@ -216,13 +212,15 @@ class Trainer:
 
     def _save_model(self) -> None:
         """
-        Saves the weights and the history.
+        Saves the weights.
         """
-        # Save weights
         weights = self.model.state_dict()
         torch.save(weights, self.weights_path)
 
-        # Save history
+    def _save_history(self) -> None:
+        """
+        Saves the history.
+        """
         self.history.save(self.log_path)
 
     def train(self, epochs: int) -> None:
@@ -275,6 +273,9 @@ class Trainer:
                 # Adjust learning rate
                 if self.lr_scheduler is not None:
                     self.lr_scheduler.step(train_loss)
+
+                # Save history
+                self._save_history()
 
                 # Update progress bar
                 t.set_postfix(postfix)
