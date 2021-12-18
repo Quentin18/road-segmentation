@@ -111,8 +111,8 @@ def main(args: argparse.Namespace) -> None:
 
     # Run prediction
     accuracy, f1 = predicter.predict(proba_threshold=0.25)
-    print('Accuracy:', accuracy)
-    print('F1 score:', f1)
+    print(f'Accuracy: {accuracy:.4f}')
+    print(f'F1 score: {f1:.4f}')
 
 
 if __name__ == '__main__':
