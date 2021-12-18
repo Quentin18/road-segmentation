@@ -2,11 +2,12 @@
 Neural network predicter class.
 """
 import os
+import shutil
 from typing import Tuple
 
 import torch
 from PIL import Image
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 from tqdm.notebook import tqdm_notebook
 
@@ -42,7 +43,11 @@ class Predicter:
         self.device = device
         self.predictions_path = predictions_path
         self.data_loader = data_loader
+        self.nb_imgs = len(data_loader)
         self.predictions_filenames = list()
+
+        # Reset predictions directory
+        shutil.rmtree(self.predictions_path, ignore_errors=True)
 
         # Create predictions directory
         os.makedirs(self.predictions_path, exist_ok=True)
@@ -51,8 +56,7 @@ class Predicter:
         self.tqdm = tqdm_notebook if notebook else tqdm
 
     def _get_pred_filename(self, index: int) -> str:
-        """Returns the filename of the prediction from the index of the image
-        in the dataset.
+        """Returns the filename of the prediction.
 
         Args:
             index (int): index of the image in the dataset.
@@ -60,12 +64,9 @@ class Predicter:
         Returns:
             str: filename of the prediction.
         """
-        if isinstance(self.data_loader.dataset, Subset):
-            dataset = self.data_loader.dataset.dataset
-            index = self.data_loader.dataset.indices[index]
-        else:
-            dataset = self.data_loader.dataset
-        return dataset.get_img_filename(index)
+        if self.nb_imgs > 1000:
+            return f'prediction_{index + 1:04d}.png'
+        return f'prediction_{index + 1:03d}.png'
 
     def _predict_labels(
         self,
