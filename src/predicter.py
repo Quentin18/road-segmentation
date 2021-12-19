@@ -26,6 +26,7 @@ class Predicter:
         device: str,
         predictions_path: str,
         data_loader: DataLoader,
+        save_comparison: bool = True,
         notebook: bool = False,
     ) -> None:
         """Inits the predicter.
@@ -35,6 +36,8 @@ class Predicter:
             device (str): device (cpu or cuda).
             predictions_path (str): path to the directory of predictions.
             data_loader (DataLoader): data loader to predict.
+            save_comparison (bool, optional): True to save comparison between
+            image, groundtruth and prediction. Defaults to False.
             notebook (bool, optional): True if predicting is done in a notebook
             (to display progress bar properly). Defaults to False.
         """
@@ -48,7 +51,10 @@ class Predicter:
         self.predictions_filenames = list()
 
         # Extra directory containing comparisons with images and groundtruth
-        self.extra_path = os.path.join(self.predictions_path, 'extra')
+        if save_comparison:
+            self.extra_path = os.path.join(self.predictions_path, 'extra')
+        else:
+            self.extra_path = None
 
         # Set progress bar functions
         self.tqdm = tqdm_notebook if notebook else tqdm
@@ -61,9 +67,12 @@ class Predicter:
         # Reset predictions directory
         shutil.rmtree(self.predictions_path, ignore_errors=True)
 
-        # Create predictions and extra directories
-        for path in (self.predictions_path, self.extra_path):
-            os.makedirs(path, exist_ok=True)
+        # Create predictions directory
+        os.makedirs(self.predictions_path, exist_ok=True)
+
+        # Create extra directory
+        if self.extra_path is not None:
+            os.makedirs(self.extra_path, exist_ok=True)
 
     def _get_pred_filename(self, index: int) -> str:
         """Returns the filename of the prediction.
@@ -171,7 +180,8 @@ class Predicter:
                         t.set_postfix(acuracy=accuracy, f1=f1)
                         accuracy_scores.append(accuracy)
                         f1_scores.append(f1)
-                        self._save_comparison(i, data, target, output)
+                        if self.save_comparison:
+                            self._save_comparison(i, data, target, output)
 
                     # Save mask
                     output_path = os.path.join(self.predictions_path, filename)

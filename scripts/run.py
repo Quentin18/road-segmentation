@@ -78,6 +78,7 @@ def main(args: argparse.Namespace) -> None:
         device=device,
         predictions_path=DEFAULT_SUBMISSION_MASK_DIR,
         data_loader=test_loader,
+        save_comparison=False,
     )
 
     # Run prediction
