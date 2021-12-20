@@ -8,6 +8,13 @@ Project 2 of the Machine Learning course given at the EPFL Fall 2021.
 - Emilien Seiler
 - Louis Le Guillouzic
 
+## Results
+
+Model | Postprocessing | F1 score | Accuracy | Submission
+--- | --- | --- | --- | ---
+UNet | Yes | 0.900 | 0.945 | [#168790](https://www.aicrowd.com/46ca6cd5-1281-4b20-b39c-d686c13b93f6)
+UNet | No | 0.900 | 0.945 | [#168760](https://www.aicrowd.com/0d812527-da37-4b16-b4e2-d01668a7573c)
+
 ## Installing
 
 To run the code of this project, you need to install the libraries listed in
