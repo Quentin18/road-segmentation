@@ -7,6 +7,7 @@ python3 predict.py
 To see the different options, run `python3 predict.py --help`.
 """
 import argparse
+import os
 
 import torch
 from torch.utils.data import DataLoader
@@ -18,11 +19,17 @@ add_root_to_path()
 
 # Imports from src
 from src.datasets import SatelliteImagesDataset, train_test_split
-from src.models import SegNet, UNet
+from src.models import NestedUNet, SegNet, UNet
 from src.path import (DATA_TRAIN_AUG_GT_PATH, DATA_TRAIN_AUG_IMG_PATH,
-                      DEFAULT_PREDICTIONS_DIR, DEFAULT_WEIGHTS_PATH,
-                      create_dirs, extract_archives)
+                      DEFAULT_PREDICTIONS_DIR, MODELS_DIR, create_dirs,
+                      extract_archives)
 from src.predicter import Predicter
+
+# Default config
+DEFAULT_MODEL = 'unet'
+DEFAULT_MODEL_PATH = os.path.join(MODELS_DIR, 'best-model-unet.pt')
+PROBA_THRESHOLD = 0.25
+CLEAN = True
 
 
 def main(args: argparse.Namespace) -> None:
@@ -90,6 +97,8 @@ def main(args: argparse.Namespace) -> None:
         model = UNet()
     elif args.model == 'segnet':
         model = SegNet()
+    elif args.model == 'nested-unet':
+        model = NestedUNet()
     else:
         print(f'Error: unknown model {args.model}')
         return
@@ -107,10 +116,14 @@ def main(args: argparse.Namespace) -> None:
         device=device,
         predictions_path=DEFAULT_PREDICTIONS_DIR,
         data_loader=test_loader,
+        save_comparison=True,
     )
 
     # Run prediction
-    accuracy, f1 = predicter.predict(proba_threshold=0.25)
+    accuracy, f1 = predicter.predict(
+        proba_threshold=PROBA_THRESHOLD,
+        clean=CLEAN,
+    )
     print(f'Accuracy: {accuracy:.4f}')
     print(f'F1 score: {f1:.4f}')
 
@@ -122,15 +135,15 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--model',
-        choices=('unet', 'segnet'),
-        default='unet',
+        choices=('unet', 'segnet', 'nested-unet'),
+        default=DEFAULT_MODEL,
         help='model to use',
     )
     parser.add_argument(
         '--model-path',
         type=str,
-        default=DEFAULT_WEIGHTS_PATH,
-        help='output model path',
+        default=DEFAULT_MODEL_PATH,
+        help='model path',
     )
     parser.add_argument(
         '--seed',
