@@ -8,7 +8,7 @@ from typing import List
 import numpy as np
 from PIL import Image
 from skimage import io
-from tqdm import tqdm
+from tqdm import tqdm, trange
 
 from src.path import OUT_DIR
 
@@ -108,7 +108,7 @@ def submission_to_masks(submission_filename: str, nb_masks: int = 50,
         os.mkdir(masks_dirname)
 
     # Create masks
-    for i in range(nb_masks):
+    for i in trange(nb_masks):
         image_id = i + 1
         if masks_dirname is not None:
             mask_name = f'prediction_{image_id:03d}.png'
