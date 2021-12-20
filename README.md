@@ -2,6 +2,9 @@
 
 Project 2 of the Machine Learning course given at the EPFL Fall 2021.
 
+The goal of this project is to segment satellite images by detecting roads.
+Our classifier consists of a convolutional neural network called UNet.
+
 ## Team members
 
 - Quentin Deschamps
@@ -23,6 +26,15 @@ command:
 ```
 pip3 install -r requirements.txt
 ```
+
+Dependencies:
+- matplotlib
+- numpy
+- pillow
+- scikit-image
+- torch
+- torchvision
+- tqdm
 
 ## Instructions
 
@@ -60,7 +72,7 @@ To see the different options, run `python3 train.py --help`.
 
 ### Predicting
 
-To create the predicted masks using a trained a model, you can use the
+To create the predicted masks using a trained model, you can use the
 `predict.py` script:
 ```
 python3 predict.py
@@ -93,6 +105,7 @@ This is the structure of the repository:
     - `train.py`: train the model
 - `src`: source code
     - `models`: neural network models
+        - `nested_unet.py`: nested UNet implementation
         - `segnet.py`: SegNet implementation
         - `unet.py`: UNet implementation
     - `data_augmentation.py`: creation of the augmented dataset
@@ -101,6 +114,7 @@ This is the structure of the repository:
     - `metrics.py`: score and performance functions
     - `path.py`: paths and archives management
     - `plot_utils.py`: plot utils using matplotlib
+    - `postprocessing.py`: postprocessing functions to improve predictions
     - `predicter.py`: predicter class to make predictions using a trained model
     - `submission.py`: submission utils
     - `trainer.py`: trainer class to train a model
