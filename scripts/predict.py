@@ -29,7 +29,7 @@ from src.predicter import Predicter
 DEFAULT_MODEL = 'unet'
 DEFAULT_MODEL_PATH = os.path.join(MODELS_DIR, 'best-model-unet.pt')
 PROBA_THRESHOLD = 0.25
-CLEAN = True
+CLEAN = False
 
 
 def main(args: argparse.Namespace) -> None:

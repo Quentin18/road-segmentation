@@ -138,7 +138,8 @@ def patch_to_label(patch: np.ndarray,
 
 
 def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
-                               foreground_threshold: float = 0.25):
+                               foreground_threshold: float = 0.25,
+                               clean: bool = True):
     """Reads a single mask image and outputs the strings that should go into
     the submission file.
 
@@ -147,21 +148,67 @@ def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
         patch_size (int, optional): patch size. Defaults to 16.
         foreground_threshold (float, optional): foreground_threshold.
         Defaults to 0.25.
+        clean (bool, optional): clean the patches by a neighbor method.
+        Defaults to True.
     """
     mask_name = os.path.basename(mask_filename)
     img_number = int(re.search(r"\d+", mask_name).group(0))
     im = io.imread(os.path.join(OUT_DIR, 'submission', mask_filename))
+
+    # Create mask of patch 38x38
+    mask_patch = np.zeros(
+        shape=(im.shape[0] // patch_size, im.shape[1] // patch_size),
+        dtype=np.uint8,
+    )
     for j in range(0, im.shape[1], patch_size):
         for i in range(0, im.shape[0], patch_size):
             patch = im[i:i + patch_size, j:j + patch_size]
-            label = patch_to_label(patch,
-                                   foreground_threshold=foreground_threshold)
-            yield f'{img_number:03d}_{j}_{i},{label}'
+            label = patch_to_label(
+                patch=patch,
+                foreground_threshold=foreground_threshold,
+            )
+            mask_patch[j // patch_size, i // patch_size] = label
+
+    # Improve patches
+    if clean:
+        for j in range(2, mask_patch.shape[1] - 2):
+            for i in range(2, mask_patch.shape[0] - 2):
+                label = mask_patch[j, i]
+
+                # If not road: ignore
+                if label == 0:
+                    continue
+
+                if mask_patch[j - 2, i]:
+                    mask_patch[j - 1, i] = 1
+                if mask_patch[j, i - 2]:
+                    mask_patch[j, i - 1] = 1
+
+                if mask_patch[j + 2, i]:
+                    mask_patch[j + 1, i] = 1
+                if mask_patch[j, i + 2]:
+                    mask_patch[j, i + 1] = 1
+
+                # if mask_patch[j + 2, i + 2]:
+                #     mask_patch[j + 1, i + 1] = 1
+                # if mask_patch[j - 2, i - 2]:
+                #     mask_patch[j - 1, i - 1] = 1
+                # if mask_patch[j + 2, i - 2]:
+                #     mask_patch[j + 1, i - 1] = 1
+                # if mask_patch[j - 2, i + 2]:
+                #     mask_patch[j - 1, i + 1] = 1
+
+    # Yield patches
+    for j in range(mask_patch.shape[1]):
+        for i in range(mask_patch.shape[0]):
+            label = mask_patch[j, i]
+            yield f'{img_number:03d}_{j * patch_size}_{i * patch_size},{label}'
 
 
 def masks_to_submission(submission_filename: str,
                         masks_filenames: list, patch_size: int = 16,
-                        foreground_threshold: float = 0.25) -> None:
+                        foreground_threshold: float = 0.25,
+                        clean: bool = True) -> None:
     """Creates a submission file from masks filenames.
 
     Args:
@@ -170,9 +217,12 @@ def masks_to_submission(submission_filename: str,
         patch_size (int, optional): patch size. Defaults to 16.
         foreground_threshold (float, optional): foreground_threshold.
         Defaults to 0.25.
+        clean (bool, optional): clean the patches by a neighbor method.
+        Defaults to True.
     """
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
         for fn in tqdm(masks_filenames, desc='Create submission', unit='mask'):
             f.writelines(f'{s}\n' for s in mask_to_submission_strings(
-                fn, patch_size, foreground_threshold=foreground_threshold))
+                fn, patch_size, foreground_threshold=foreground_threshold,
+                clean=clean))
