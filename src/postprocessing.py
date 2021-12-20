@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 
 EPS = 10  # maximum distance between two samples of a cluster
-MIN_NB_POINTS = 1000  # minimum number of points to keep a cluster
+MIN_NB_POINTS = 500  # minimum number of points to keep a cluster
 
 
 def get_cleaned_pred(pred_array: np.ndarray) -> np.ndarray:
@@ -23,6 +23,10 @@ def get_cleaned_pred(pred_array: np.ndarray) -> np.ndarray:
     # Transform prediction to an array of points
     x_arr, y_arr = np.where(pred_array > 0)
     X = np.array([[x, y] for x, y in zip(x_arr, y_arr)])
+
+    # Case where no roads
+    if len(X) == 0:
+        return pred_array
 
     # Clustering
     dbscan = DBSCAN(eps=EPS)
