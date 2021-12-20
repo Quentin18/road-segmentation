@@ -9,8 +9,8 @@ To see the different options, run `python3 train.py --help`.
 import argparse
 
 import torch
-from torch.nn import BCEWithLogitsLoss
 from torch.optim import Adam
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
@@ -20,11 +20,26 @@ add_root_to_path()
 
 # Imports from src
 from src.datasets import SatelliteImagesDataset, train_test_split
-from src.models import SegNet, UNet
-from src.path import (DATA_TRAIN_GT_PATH, DATA_TRAIN_IMG_PATH, create_dirs,
-                      extract_archives, generate_log_filename,
+from src.loss import DiceLoss
+from src.models import NestedUNet, SegNet, UNet
+from src.path import (DATA_TRAIN_AUG_GT_PATH, DATA_TRAIN_AUG_IMG_PATH,
+                      create_dirs, extract_archives, generate_log_filename,
                       generate_model_filename)
 from src.trainer import Trainer
+
+# Default config
+MODEL = 'unet'
+BATCH_SIZE = 10
+EPOCHS = 100
+LR = 1e-4
+SEED = 0
+SPLIT_RATIO = 0.2
+WEIGHT_DECAY = 1e-4
+WORKERS = 2
+
+# Paths
+IMG_DIR = DATA_TRAIN_AUG_IMG_PATH
+GT_DIR = DATA_TRAIN_AUG_GT_PATH
 
 
 def main(args: argparse.Namespace):
@@ -49,12 +64,9 @@ def main(args: argparse.Namespace):
 
     # Define transforms
     image_transform = transforms.Compose([
-        transforms.Resize((args.image_size, args.image_size)),
         transforms.ToTensor(),
-        # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     mask_transform = transforms.Compose([
-        transforms.Resize((args.image_size, args.image_size)),
         transforms.ToTensor(),
     ])
 
@@ -73,8 +85,8 @@ def main(args: argparse.Namespace):
 
     # Define dataset
     dataset = SatelliteImagesDataset(
-        img_dir=DATA_TRAIN_IMG_PATH,
-        gt_dir=DATA_TRAIN_GT_PATH,
+        img_dir=IMG_DIR,
+        gt_dir=GT_DIR,
         image_transform=image_transform,
         mask_transform=mask_transform,
     )
@@ -103,7 +115,7 @@ def main(args: argparse.Namespace):
         )
         test_loader = DataLoader(
             dataset=test_set,
-            batch_size=args.batch_size,
+            batch_size=1,
             shuffle=False,
             num_workers=args.workers,
             pin_memory=pin_memory,
@@ -123,15 +135,25 @@ def main(args: argparse.Namespace):
         model = UNet()
     elif args.model == 'segnet':
         model = SegNet()
+    elif args.model == 'nested-unet':
+        model = NestedUNet()
     else:
         print(f'Error: unknown model {args.model}')
         return
     print('Model:', args.model)
     model.to(device)
 
-    # Define a loss function and optimizer
-    criterion = BCEWithLogitsLoss()
-    optimizer = Adam(model.parameters(), lr=args.lr)
+    # Define loss function and optimizer
+    criterion = DiceLoss()
+    optimizer = Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+
+    # Learning rate scheduler
+    lr_scheduler = ReduceLROnPlateau(
+        optimizer=optimizer,
+        mode='min',
+        patience=5,
+        verbose=True,
+    )
 
     trainer = Trainer(
         model=model,
@@ -142,12 +164,10 @@ def main(args: argparse.Namespace):
         log_path=log_path,
         data_loader=train_loader,
         valid_data_loader=test_loader,
+        lr_scheduler=lr_scheduler,
         notebook=args.notebook,
     )
     trainer.train(args.epochs)
-
-    # Plot history
-    trainer.history.plot(log_path.replace('.pickle', '.pdf'))
 
 
 if __name__ == '__main__':
@@ -158,20 +178,14 @@ if __name__ == '__main__':
     parser.add_argument(
         '--batch-size',
         type=int,
-        default=1,
+        default=BATCH_SIZE,
         help='input batch size for training',
     )
     parser.add_argument(
         '--epochs',
         type=int,
-        default=100,
+        default=EPOCHS,
         help='number of epochs to train',
-    )
-    parser.add_argument(
-        '--image-size',
-        type=int,
-        default=320,
-        help='target input image size',
     )
     parser.add_argument(
         '--log-path',
@@ -182,13 +196,13 @@ if __name__ == '__main__':
     parser.add_argument(
         '--lr',
         type=float,
-        default=1e-3,
+        default=LR,
         help='initial learning rate',
     )
     parser.add_argument(
         '--model',
-        choices=('unet', 'segnet'),
-        default='unet',
+        choices=('unet', 'segnet', 'nested-unet'),
+        default=MODEL,
         help='model to use',
     )
     parser.add_argument(
