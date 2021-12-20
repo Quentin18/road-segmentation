@@ -15,11 +15,16 @@ add_root_to_path()
 # Imports from src
 from src.datasets import SatelliteImagesDataset
 from src.models import UNet
-from src.path import (DATA_TEST_IMG_PATH, DEFAULT_SUBMISSION_MASK_DIR,
-                      DEFAULT_WEIGHTS_PATH, OUT_DIR, create_dirs,
+from src.path import (DATA_TEST_IMG_PATH, MODELS_DIR, OUT_DIR, create_dirs,
                       extract_archives)
 from src.predicter import Predicter
-from src.submission import masks_to_submission
+from src.submission import masks_to_submission, submission_to_masks
+
+# Paths
+DEFAULT_MODEL = os.path.join(MODELS_DIR, 'best-model-unet.pt')
+SUBMISSION_FILENAME = os.path.join(OUT_DIR, 'submission.csv')
+SUBMISSION_DIRNAME = os.path.join(OUT_DIR, 'submission')
+SUBMISSION_PATCH_DIRNAME = os.path.join(OUT_DIR, 'submission_patch')
 
 
 def main(args: argparse.Namespace) -> None:
@@ -76,7 +81,7 @@ def main(args: argparse.Namespace) -> None:
     predicter = Predicter(
         model=model,
         device=device,
-        predictions_path=DEFAULT_SUBMISSION_MASK_DIR,
+        predictions_path=SUBMISSION_DIRNAME,
         data_loader=test_loader,
         save_comparison=False,
     )
@@ -87,9 +92,16 @@ def main(args: argparse.Namespace) -> None:
     # CSV submission
     print("== Creation of mask images ==")
     masks_to_submission(
-        submission_filename=os.path.join(OUT_DIR, 'submission.csv'),
+        submission_filename=SUBMISSION_FILENAME,
         masks_filenames=predicter.predictions_filenames,
         foreground_threshold=args.submit_threshold,
+    )
+
+    # Create back masks to check submission
+    print("== Creation of patch mask images ==")
+    submission_to_masks(
+        submission_filename=SUBMISSION_FILENAME,
+        masks_dirname=SUBMISSION_PATCH_DIRNAME,
     )
 
 
@@ -101,8 +113,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--model-path',
         type=str,
-        default=DEFAULT_WEIGHTS_PATH,
-        help='output model path',
+        default=DEFAULT_MODEL,
+        help='model path',
     )
     parser.add_argument(
         '--predict-threshold',
