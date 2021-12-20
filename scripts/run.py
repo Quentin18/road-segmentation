@@ -1,8 +1,18 @@
 """
 Submission script.
+
+Usage:
+python3 run.py
+
+To see the different options, run `python3 run.py --help`.
+
+- The filename of the csv submission file is: `out/submission.csv`.
+- The predicted masks (608x608) are saved in the `out/submission` directory.
+- The masks with 16x16 patches (38x38) are saved in the `out/submission_patch`
+directory.
 """
-import os
 import argparse
+import os
 
 import torch
 from torch.utils.data import DataLoader
@@ -14,17 +24,21 @@ add_root_to_path()
 
 # Imports from src
 from src.datasets import SatelliteImagesDataset
-from src.models import UNet
+from src.models import NestedUNet, SegNet, UNet
 from src.path import (DATA_TEST_IMG_PATH, MODELS_DIR, OUT_DIR, create_dirs,
                       extract_archives)
 from src.predicter import Predicter
 from src.submission import masks_to_submission, submission_to_masks
 
-# Paths
-DEFAULT_MODEL = os.path.join(MODELS_DIR, 'best-model-unet.pt')
+# Default config
+DEFAULT_MODEL = 'unet'
+DEFAULT_MODEL_PATH = os.path.join(MODELS_DIR, 'best-model-unet.pt')
 SUBMISSION_FILENAME = os.path.join(OUT_DIR, 'submission.csv')
 SUBMISSION_DIRNAME = os.path.join(OUT_DIR, 'submission')
 SUBMISSION_PATCH_DIRNAME = os.path.join(OUT_DIR, 'submission_patch')
+PROBA_THRESHOLD = 0.2
+FOREGROUND_THRESHOLD = 0.2
+CLEAN = False
 
 
 def main(args: argparse.Namespace) -> None:
@@ -64,13 +78,21 @@ def main(args: argparse.Namespace) -> None:
 
     test_loader = DataLoader(
         dataset=train_set,
-        batch_size=1,
         num_workers=args.workers,
         pin_memory=pin_memory,
     )
 
-    # Define neural net
-    model = UNet()
+    # Define model
+    if args.model == 'unet':
+        model = UNet()
+    elif args.model == 'segnet':
+        model = SegNet()
+    elif args.model == 'nested-unet':
+        model = NestedUNet()
+    else:
+        print(f'Error: unknown model {args.model}')
+        return
+    print('Model:', args.model)
     model.to(device)
 
     # Load weights
@@ -87,14 +109,15 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # Run prediction
-    predicter.predict(proba_threshold=args.predict_threshold, clean=True)
+    predicter.predict(proba_threshold=PROBA_THRESHOLD, clean=CLEAN)
 
     # CSV submission
     print("== Creation of mask images ==")
     masks_to_submission(
         submission_filename=SUBMISSION_FILENAME,
         masks_filenames=predicter.predictions_filenames,
-        foreground_threshold=args.submit_threshold,
+        foreground_threshold=FOREGROUND_THRESHOLD,
+        clean=CLEAN,
     )
 
     # Create back masks to check submission
@@ -111,28 +134,22 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        '--model-path',
-        type=str,
+        '--model',
+        choices=('unet', 'segnet', 'nested-unet'),
         default=DEFAULT_MODEL,
-        help='model path',
+        help='model to use',
     )
     parser.add_argument(
-        '--predict-threshold',
-        type=float,
-        default=0.2,
-        help='threshold for predict',
+        '--model-path',
+        type=str,
+        default=DEFAULT_MODEL_PATH,
+        help='model path',
     )
     parser.add_argument(
         '--seed',
         type=int,
         default=0,
         help='seed',
-    )
-    parser.add_argument(
-        '--submit-threshold',
-        type=float,
-        default=0.2,
-        help='threshold for submission',
     )
     parser.add_argument(
         '--workers',
