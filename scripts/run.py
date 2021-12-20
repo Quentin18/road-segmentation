@@ -87,8 +87,8 @@ def main(args: argparse.Namespace) -> None:
     # CSV submission
     print("== Creation of mask images ==")
     masks_to_submission(
-        submission_filename=os.path.join(OUT_DIR, 'unet_submission.csv'),
-        masks_filenames=os.listdir(DEFAULT_SUBMISSION_MASK_DIR),
+        submission_filename=os.path.join(OUT_DIR, 'submission.csv'),
+        masks_filenames=predicter.predictions_filenames,
         foreground_threshold=args.submit_threshold,
     )
 

@@ -40,8 +40,10 @@ class SatelliteImagesDataset(Dataset):
             self.images_names = self._get_filenames(self.img_dir)
             self.masks_names = self._get_filenames(self.gt_dir)
         else:
-            self.images_names = [f'{name}/{name}.png' for name in
-                                 self._get_filenames(self.img_dir)]
+            # Test set
+            self.images_names = [
+                f'test_{i + 1}/test_{i + 1}.png' for i in range(50)
+            ]
             self.masks_names = list()
 
         # Transforms
