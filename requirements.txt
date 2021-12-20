@@ -1,5 +1,5 @@
-numpy
 matplotlib
+numpy
 pillow
 scikit-image
 tensorflow
