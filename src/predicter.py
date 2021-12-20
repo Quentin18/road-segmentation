@@ -196,7 +196,7 @@ class Predicter:
                         t.set_postfix(acuracy=accuracy, f1=f1)
                         accuracy_scores.append(accuracy)
                         f1_scores.append(f1)
-                        if self.save_comparison:
+                        if self.extra_path is not None:
                             self._save_comparison(i, data, target, output)
 
                     # Save mask
