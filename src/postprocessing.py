@@ -4,7 +4,7 @@ Postprocessing functions to improve predictions.
 from collections import Counter
 
 import numpy as np
-from scipy.ndimage.morphology import binary_fill_holes
+# from scipy.ndimage.morphology import binary_fill_holes
 from sklearn.cluster import DBSCAN
 
 EPS = 10  # maximum distance between two samples of a cluster
@@ -42,9 +42,9 @@ def get_cleaned_pred(pred_array: np.ndarray) -> np.ndarray:
     new_pred_array[x_arr[mask], y_arr[mask]] = 255
 
     # Fill holes
-    new_pred_array = np.array(
-        binary_fill_holes(new_pred_array),
-        dtype=np.uint8,
-    ) * 255
+    # new_pred_array = np.array(
+    #     binary_fill_holes(new_pred_array),
+    #     dtype=np.uint8,
+    # ) * 255
 
     return new_pred_array

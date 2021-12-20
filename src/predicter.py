@@ -13,6 +13,7 @@ from tqdm.notebook import tqdm_notebook
 
 from src.metrics import accuracy_score_tensors, f1_score_tensors
 from src.plot_utils import plot_images
+from src.postprocessing import get_cleaned_pred
 from src.submission import masks_to_submission
 
 
@@ -103,15 +104,24 @@ class Predicter:
         """
         return (output > proba_threshold).type(torch.uint8)
 
-    def _save_mask(cls, output: torch.Tensor, filename: str) -> None:
+    def _save_mask(
+        cls,
+        output: torch.Tensor,
+        filename: str,
+        clean: bool = True,
+    ) -> None:
         """Saves the mask as image.
 
         Args:
             output (torch.Tensor): tensor output.
             filename (str): filename.
+            clean (bool, optional): True to clean the prediction using
+            postprocessing method. Defaults to True.
         """
-        array = torch.squeeze(output * 255).cpu().numpy()
-        img = Image.fromarray(array)
+        pred_array = torch.squeeze(output * 255).cpu().numpy()
+        if clean:
+            pred_array = get_cleaned_pred(pred_array)
+        img = Image.fromarray(pred_array)
         img.save(filename)
 
     def _save_comparison(
@@ -137,11 +147,17 @@ class Predicter:
         output = torch.squeeze(output)
         plot_images(data, target, output, filename)
 
-    def predict(self, proba_threshold: float = 0.25) -> Tuple[float, float]:
+    def predict(
+        self,
+        proba_threshold: float = 0.25,
+        clean: bool = True,
+    ) -> Tuple[float, float]:
         """Predicts the masks of images.
 
         Args:
             proba_threshold (float): probability threshold.
+            clean (bool, optional): True to clean the predictions using
+            postprocessing method. Defaults to True.
 
         Returns:
             Tuple[float, float]: accuracy, f1 score.
@@ -185,7 +201,7 @@ class Predicter:
 
                     # Save mask
                     output_path = os.path.join(self.predictions_path, filename)
-                    self._save_mask(output, output_path)
+                    self._save_mask(output, output_path, clean)
                     self.predictions_filenames.append(output_path)
 
         # Compute average metrics

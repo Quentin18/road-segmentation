@@ -87,7 +87,7 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # Run prediction
-    predicter.predict(args.predict_threshold)
+    predicter.predict(proba_threshold=args.predict_threshold, clean=True)
 
     # CSV submission
     print("== Creation of mask images ==")
