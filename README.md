@@ -13,10 +13,13 @@ Our classifier consists of a convolutional neural network called UNet.
 
 ## Results
 
-Model | Postprocessing | F1 score | Accuracy | Submission
---- | --- | --- | --- | ---
-UNet | Yes | 0.900 | 0.945 | [#168790](https://www.aicrowd.com/46ca6cd5-1281-4b20-b39c-d686c13b93f6)
-UNet | No | 0.900 | 0.945 | [#168760](https://www.aicrowd.com/0d812527-da37-4b16-b4e2-d01668a7573c)
+Model | Data augmentation | Postprocessing | F1 score | Accuracy | Submission
+--- | --- | --- | --- | --- | ---
+UNet | Yes | No | 0.900 | 0.945 | [#168760](https://www.aicrowd.com/0d812527-da37-4b16-b4e2-d01668a7573c)
+UNet | Yes | Yes | 0.900 | 0.945 | [#168790](https://www.aicrowd.com/46ca6cd5-1281-4b20-b39c-d686c13b93f6)
+Nested UNet | Yes | No | 0.896 | 0.943 | [#169077](https://www.aicrowd.com/413f9963-f51c-4b39-ad49-b7f4861a994c)
+UNet | No | No | 0.853 | 0.922 | [#169073](https://www.aicrowd.com/40e89fef-8084-40aa-9c29-46340fdc9f89)
+
 
 ## Installing
 
