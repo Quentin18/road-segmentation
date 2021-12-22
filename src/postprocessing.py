@@ -4,7 +4,6 @@ Postprocessing functions to improve predictions.
 from collections import Counter
 
 import numpy as np
-# from scipy.ndimage.morphology import binary_fill_holes
 from sklearn.cluster import DBSCAN
 
 EPS = 10  # maximum distance between two samples of a cluster
@@ -12,7 +11,7 @@ MIN_NB_POINTS = 500  # minimum number of points to keep a cluster
 
 
 def get_cleaned_pred(pred_array: np.ndarray) -> np.ndarray:
-    """Cleans a prediction by removing small clusters and filling holes.
+    """Cleans a prediction by removing small clusters.
 
     Args:
         pred_array (np.ndarray): prediction of type numpy array.
@@ -44,11 +43,5 @@ def get_cleaned_pred(pred_array: np.ndarray) -> np.ndarray:
     # Create new prediction with removed small clusters
     new_pred_array = np.zeros_like(pred_array)
     new_pred_array[x_arr[mask], y_arr[mask]] = 255
-
-    # Fill holes
-    # new_pred_array = np.array(
-    #     binary_fill_holes(new_pred_array),
-    #     dtype=np.uint8,
-    # ) * 255
 
     return new_pred_array
