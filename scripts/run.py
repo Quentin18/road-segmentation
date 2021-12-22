@@ -120,7 +120,6 @@ def main(args: argparse.Namespace) -> None:
         submission_filename=SUBMISSION_FILENAME,
         masks_filenames=predicter.predictions_filenames,
         foreground_threshold=FOREGROUND_THRESHOLD,
-        clean=CLEAN,
     )
 
     # Create back masks to check submission

@@ -139,7 +139,7 @@ def patch_to_label(patch: np.ndarray,
 
 def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
                                foreground_threshold: float = 0.25,
-                               clean: bool = True):
+                               clean: bool = False):
     """Reads a single mask image and outputs the strings that should go into
     the submission file.
 
@@ -149,7 +149,7 @@ def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
         foreground_threshold (float, optional): foreground_threshold.
         Defaults to 0.25.
         clean (bool, optional): clean the patches by a neighbor method.
-        Defaults to True.
+        Defaults to False.
     """
     mask_name = os.path.basename(mask_filename)
     img_number = int(re.search(r"\d+", mask_name).group(0))
@@ -171,6 +171,7 @@ def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
 
     # Improve patches
     if clean:
+        mask_patch_clean = np.copy(mask_patch)
         for j in range(2, mask_patch.shape[1] - 2):
             for i in range(2, mask_patch.shape[0] - 2):
                 label = mask_patch[j, i]
@@ -180,23 +181,18 @@ def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
                     continue
 
                 if mask_patch[j - 2, i]:
-                    mask_patch[j - 1, i] = 1
+                    mask_patch_clean[j - 1, i] = 1
+
                 if mask_patch[j, i - 2]:
-                    mask_patch[j, i - 1] = 1
+                    mask_patch_clean[j, i - 1] = 1
 
                 if mask_patch[j + 2, i]:
-                    mask_patch[j + 1, i] = 1
-                if mask_patch[j, i + 2]:
-                    mask_patch[j, i + 1] = 1
+                    mask_patch_clean[j + 1, i] = 1
 
-                # if mask_patch[j + 2, i + 2]:
-                #     mask_patch[j + 1, i + 1] = 1
-                # if mask_patch[j - 2, i - 2]:
-                #     mask_patch[j - 1, i - 1] = 1
-                # if mask_patch[j + 2, i - 2]:
-                #     mask_patch[j + 1, i - 1] = 1
-                # if mask_patch[j - 2, i + 2]:
-                #     mask_patch[j - 1, i + 1] = 1
+                if mask_patch[j, i + 2]:
+                    mask_patch_clean[j, i + 1] = 1
+
+        mask_patch = mask_patch_clean
 
     # Yield patches
     for j in range(mask_patch.shape[1]):
@@ -208,7 +204,7 @@ def mask_to_submission_strings(mask_filename: str, patch_size: int = 16,
 def masks_to_submission(submission_filename: str,
                         masks_filenames: list, patch_size: int = 16,
                         foreground_threshold: float = 0.25,
-                        clean: bool = True) -> None:
+                        clean: bool = False) -> None:
     """Creates a submission file from masks filenames.
 
     Args:
@@ -218,7 +214,7 @@ def masks_to_submission(submission_filename: str,
         foreground_threshold (float, optional): foreground_threshold.
         Defaults to 0.25.
         clean (bool, optional): clean the patches by a neighbor method.
-        Defaults to True.
+        Defaults to False.
     """
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
