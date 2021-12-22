@@ -1,13 +1,15 @@
 """
 Plots utils using matplotlib.
 """
+import os
 from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL.Image import Image
+from PIL import Image
 from torch import Tensor
 from torchvision import transforms
+from tqdm import tqdm
 
 
 def img_float_to_uint8(img):
@@ -108,9 +110,9 @@ def plot_validation_F1(F1_score: list, threshold: list, optimum: int,
 
 
 def plot_images(
-    image: Union[Image, Tensor],
-    mask: Union[Image, Tensor],
-    pred: Union[Image, Tensor] = None,
+    image: Union[Image.Image, Tensor],
+    mask: Union[Image.Image, Tensor],
+    pred: Union[Image.Image, Tensor] = None,
     path: str = None,
 ) -> None:
     """Plots an image, its mask and optionaly a predicted mask.
@@ -153,3 +155,56 @@ def plot_images(
     if path is not None:
         plt.savefig(path)
         plt.close(fig)
+
+
+def make_img_overlay(image: np.ndarray, mask: np.ndarray) -> Image.Image:
+    """Convert an image an its mask as numpy arrays to an overlay.
+
+    Args:
+        image (np.ndarray): image as numpy array.
+        mask (np.ndarray): mask as numpy array.
+
+    Returns:
+        Image.Image: overlay.
+    """
+    color_mask = np.zeros_like(image, dtype=np.uint8)
+    color_mask[:, :, 0] = mask
+
+    img8 = img_float_to_uint8(image)
+    background = Image.fromarray(img8, 'RGB').convert('RGBA')
+    overlay = Image.fromarray(color_mask, 'RGB').convert('RGBA')
+    new_img = Image.blend(background, overlay, 0.2)
+    return new_img
+
+
+def make_img_overlays(image_dir: str, mask_dir: str, output_dir: str) -> None:
+    """Makes the overlays from predictions.
+
+    Args:
+        image_dir (str): images directory.
+        mask_dir (str): masks directory.
+        output_dir (str): output directory.
+    """
+    # Create output directory
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Get image names
+    image_names = [f'test_{i + 1}/test_{i + 1}.png' for i in range(50)]
+    mask_names = sorted(os.listdir(mask_dir))
+
+    for image_name, mask_name in tqdm(
+        zip(image_names, mask_names), total=len(image_names)
+    ):
+        # Get paths
+        image_path = os.path.join(image_dir, image_name)
+        mask_path = os.path.join(mask_dir, mask_name)
+
+        # Read images as numpy arrays
+        image = np.asarray(Image.open(image_path))
+        mask = np.asarray(Image.open(mask_path))
+
+        # Make overlay
+        overlay = make_img_overlay(image, mask)
+
+        # Save overlay
+        overlay.save(os.path.join(output_dir, mask_name))

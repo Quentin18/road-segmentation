@@ -10,6 +10,7 @@ To see the different options, run `python3 run.py --help`.
 - The predicted masks (608x608) are saved in the `out/submission` directory.
 - The masks with 16x16 patches (38x38) are saved in the `out/submission_patch`
 directory.
+- The overlays are saved in the `out/submission_overlay` directory.
 """
 import argparse
 import os
@@ -27,6 +28,7 @@ from src.datasets import SatelliteImagesDataset
 from src.models import NestedUNet, SegNet, UNet
 from src.path import (DATA_TEST_IMG_PATH, MODELS_DIR, OUT_DIR, create_dirs,
                       extract_archives)
+from src.plot_utils import make_img_overlays
 from src.predicter import Predicter
 from src.submission import masks_to_submission, submission_to_masks
 
@@ -36,6 +38,7 @@ DEFAULT_MODEL_PATH = os.path.join(MODELS_DIR, 'best-model-unet.pt')
 SUBMISSION_FILENAME = os.path.join(OUT_DIR, 'submission.csv')
 SUBMISSION_DIRNAME = os.path.join(OUT_DIR, 'submission')
 SUBMISSION_PATCH_DIRNAME = os.path.join(OUT_DIR, 'submission_patch')
+SUBMISSION_OVERLAY_DIRNAME = os.path.join(OUT_DIR, 'submission_overlay')
 PROBA_THRESHOLD = 0.2
 FOREGROUND_THRESHOLD = 0.2
 CLEAN = False
@@ -117,7 +120,7 @@ def main(args: argparse.Namespace) -> None:
         submission_filename=SUBMISSION_FILENAME,
         masks_filenames=predicter.predictions_filenames,
         foreground_threshold=FOREGROUND_THRESHOLD,
-        # clean=CLEAN,
+        clean=CLEAN,
     )
 
     # Create back masks to check submission
@@ -125,6 +128,14 @@ def main(args: argparse.Namespace) -> None:
     submission_to_masks(
         submission_filename=SUBMISSION_FILENAME,
         masks_dirname=SUBMISSION_PATCH_DIRNAME,
+    )
+
+    # Create overlays
+    print("== Creation of overlays ==")
+    make_img_overlays(
+        image_dir=DATA_TEST_IMG_PATH,
+        mask_dir=SUBMISSION_PATCH_DIRNAME,
+        output_dir=SUBMISSION_OVERLAY_DIRNAME,
     )
 
 
