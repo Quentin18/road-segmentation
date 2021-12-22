@@ -41,7 +41,7 @@ SUBMISSION_PATCH_DIRNAME = os.path.join(OUT_DIR, 'submission_patch')
 SUBMISSION_OVERLAY_DIRNAME = os.path.join(OUT_DIR, 'submission_overlay')
 PROBA_THRESHOLD = 0.2
 FOREGROUND_THRESHOLD = 0.2
-CLEAN = False
+CLEAN = True
 
 
 def main(args: argparse.Namespace) -> None:
